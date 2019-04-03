@@ -1,7 +1,6 @@
 package alipay
 
 import (
-	"fmt"
 	"net/url"
 
 	"github.com/admpub/log"
@@ -42,7 +41,7 @@ func (a *Alipay) Pay(cfg *config.Pay) (param.StringMap, error) {
 		NotifyURL:   cfg.NotifyURL,
 		Subject:     cfg.Subject,
 		OutTradeNo:  cfg.TradeNo,
-		TotalAmount: fmt.Sprint(cfg.Amount),
+		TotalAmount: MoneyFeeToString(cfg.Amount),
 		ProductCode: "QUICK_WAP_WAY",
 	}
 	var err error
@@ -95,7 +94,7 @@ func (a *Alipay) Refund(cfg *config.Refund) (param.StringMap, error) {
 	result := param.StringMap{}
 	refundConfig := alipay.AliPayTradeRefund{
 		OutTradeNo:   cfg.TradeNo,
-		RefundAmount: fmt.Sprint(cfg.RefundAmount),
+		RefundAmount: MoneyFeeToString(cfg.RefundAmount),
 	}
 	resp, err := a.client.TradeRefund(refundConfig)
 	_ = resp

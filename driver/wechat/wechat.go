@@ -43,7 +43,7 @@ func (a *Wechat) Pay(cfg *config.Pay) (param.StringMap, error) {
 	wxParams := wxpay.Params{
 		"notify_url":   cfg.NotifyURL,
 		"trade_type":   cfg.DeviceType(),
-		"total_fee":    wxpayAmount(cfg.Amount),
+		"total_fee":    MoneyFeeToString(cfg.Amount),
 		"out_trade_no": cfg.TradeNo,
 		"body":         cfg.Subject,
 	}
@@ -94,8 +94,8 @@ func (a *Wechat) Refund(cfg *config.Refund) (param.StringMap, error) {
 	refundConfig := wxpay.Params{
 		"out_trade_no":  cfg.TradeNo,
 		"out_refund_no": cfg.RefundNo,
-		"total_fee":     wxpayAmount(cfg.TotalAmount),
-		"refund_fee":    wxpayAmount(cfg.RefundAmount),
+		"total_fee":     MoneyFeeToString(cfg.TotalAmount),
+		"refund_fee":    MoneyFeeToString(cfg.RefundAmount),
 	}
 	resp, err := a.client.Refund(refundConfig)
 	if err != nil {

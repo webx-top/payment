@@ -5,14 +5,13 @@ import (
 	"time"
 
 	"github.com/objcoding/wxpay"
-	"github.com/shopspring/decimal"
+	"github.com/webx-top/payment"
 	"github.com/webx-top/payment/config"
 )
 
-func wxpayAmount(amount float64) string {
-	aDecimal := decimal.NewFromFloat(amount)
-	bDecimal := decimal.NewFromFloat(100)
-	return aDecimal.Mul(bDecimal).Truncate(0).String()
+// MoneyFeeToString 微信金额浮点转字符串
+func MoneyFeeToString(moneyFee float64) string {
+	return payment.MulFloat(moneyFee, 100, 0)
 }
 
 func (a *Wechat) translateWxpayAppResult(tradePay *config.Pay, params wxpay.Params) map[string]string {
