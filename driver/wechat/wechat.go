@@ -1,9 +1,9 @@
 package wechat
 
 import (
-	"fmt"
 	"io/ioutil"
 
+	"github.com/admpub/log"
 	"github.com/objcoding/wxpay"
 	"github.com/webx-top/echo"
 	"github.com/webx-top/echo/param"
@@ -13,12 +13,22 @@ import (
 )
 
 func init() {
-	payment.Register(config.Platform(`wechat`), &Wechat{})
+	payment.Register(config.Platform(`wechat`), New)
+}
+
+func New() payment.Hook {
+	return &Wechat{}
 }
 
 type Wechat struct {
-	account *config.Account
-	client  *wxpay.Client
+	account        *config.Account
+	client         *wxpay.Client
+	notifyCallback func(echo.Context) error
+}
+
+func (a *Wechat) SetNotifyCallback(callback func(echo.Context) error) payment.Hook {
+	a.notifyCallback = callback
+	return a
 }
 
 func (a *Wechat) SetAccount(account *config.Account) payment.Hook {
@@ -44,34 +54,50 @@ func (a *Wechat) Pay(cfg *config.Pay) (param.StringMap, error) {
 	return param.ToStringMap(a.translateWxpayAppResult(cfg, params)), nil
 }
 
-func (a *Wechat) Notify(ctx echo.Context) (param.StringMap, error) {
+func (a *Wechat) Notify(ctx echo.Context) error {
 	result := param.StringMap{}
 	body := ctx.Request().Body()
 	defer body.Close()
 	b, err := ioutil.ReadAll(body)
 	if err != nil {
-		return result, err
+		return err
 	}
 	params := wxpay.XmlToMap(string(b))
 	if !a.client.ValidSign(params) {
-		return result, fmt.Errorf("签名失败")
+		return config.ErrSignature
 	}
 	result = param.ToStringMap(params)
 	if params["return_code"] != "SUCCESS" {
-		return result, fmt.Errorf("支付失败")
+		return config.ErrPaymentFailed
 	}
-	return result, nil
+	var isSuccess = true
+	var xmlString string
+	noti := wxpay.Notifies{}
+	if a.notifyCallback != nil {
+		ctx.Set(`notify`, result)
+		if err := a.notifyCallback(ctx); err != nil {
+			log.Error(err)
+			isSuccess = false
+		}
+	}
+	if !isSuccess {
+		xmlString = noti.NotOK("faild")
+	} else {
+		xmlString = noti.OK()
+	}
+
+	return ctx.Blob([]byte(xmlString))
 }
 
 func (a *Wechat) Refund(cfg *config.Refund) (param.StringMap, error) {
 	result := param.StringMap{}
-	refundConfig := &wxpay.Params{
+	refundConfig := wxpay.Params{
 		"out_trade_no":  cfg.TradeNo,
 		"out_refund_no": cfg.RefundNo,
 		"total_fee":     wxpayAmount(cfg.TotalAmount),
 		"refund_fee":    wxpayAmount(cfg.RefundAmount),
 	}
-	resp, err := a.client.Refund(*refundConfig)
+	resp, err := a.client.Refund(refundConfig)
 	if err != nil {
 		return nil, err
 	}

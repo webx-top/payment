@@ -1,15 +1,28 @@
 package alipay
 
 import (
-	"fmt"
 	"net/url"
 
 	"github.com/smartwalle/alipay"
+	"github.com/webx-top/echo/param"
+	"github.com/webx-top/payment/config"
 )
 
+func (a *Alipay) verifySign(req url.Values) error {
+	ok, err := a.client.VerifySign(req)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return config.ErrSignature
+	}
+	return nil
+}
+
 func (a *Alipay) getAlipayTradeNotification(req url.Values) (*alipay.TradeNotification, error) {
-	if ok, _ := a.client.VerifySign(req); !ok {
-		return nil, fmt.Errorf("签名失败")
+	err := a.verifySign(req)
+	if err != nil {
+		return nil, err
 	}
 	noti := &alipay.TradeNotification{}
 	noti.AppId = req.Get("app_id")
@@ -46,4 +59,17 @@ func (a *Alipay) getAlipayTradeNotification(req url.Values) (*alipay.TradeNotifi
 	noti.VoucherDetailList = req.Get("voucher_detail_list")
 
 	return noti, nil
+}
+
+func (a *Alipay) getAlipayTradeNotificationData(req url.Values) (param.StringMap, error) {
+	err := a.verifySign(req)
+	if err != nil {
+		return nil, err
+	}
+
+	result := param.StringMap{}
+	for k := range req {
+		result[k] = param.String(req.Get(k))
+	}
+	return result, nil
 }

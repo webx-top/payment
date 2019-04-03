@@ -2,7 +2,11 @@ package config
 
 import "errors"
 
-var ErrUnknowDevice = errors.New("Unknow device type")
+var (
+	ErrUnknowDevice  = errors.New("Unknow device type")
+	ErrSignature     = errors.New("Signature error")
+	ErrPaymentFailed = errors.New("Payment failed")
+)
 
 func IsOK(err error) bool {
 	_, ok := err.(OKer)
