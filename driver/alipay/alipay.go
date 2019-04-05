@@ -32,7 +32,12 @@ func (a *Alipay) SetNotifyCallback(callback func(echo.Context) error) payment.Ho
 
 func (a *Alipay) SetAccount(account *config.Account) payment.Hook {
 	a.account = account
-	a.client = alipay.New(account.ClientID, account.PublicKey, account.PrivateKey, !account.Debug)
+	a.client = alipay.New(
+		account.AppID,
+		account.PublicKey,
+		account.PrivateKey,
+		!account.Debug,
+	)
 	return a
 }
 

@@ -33,7 +33,12 @@ func (a *Wechat) SetNotifyCallback(callback func(echo.Context) error) payment.Ho
 
 func (a *Wechat) SetAccount(account *config.Account) payment.Hook {
 	a.account = account
-	wechatAccount := wxpay.NewAccount(account.ClientID, account.MerchantID, account.ClientSecret, account.Debug)
+	wechatAccount := wxpay.NewAccount(
+		account.AppID,
+		account.MerchantID,
+		account.AppSecret,
+		account.Debug,
+	)
 	wechatAccount.SetCertData(account.CertPath)
 	a.client = wxpay.NewClient(wechatAccount)
 	return a
