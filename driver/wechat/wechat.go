@@ -12,8 +12,10 @@ import (
 	//"github.com/objcoding/wxpay"
 )
 
+const Name config.Platform = `wechat`
+
 func init() {
-	payment.Register(config.Platform(`wechat`), New)
+	payment.Register(Name, New)
 }
 
 func New() payment.Hook {
