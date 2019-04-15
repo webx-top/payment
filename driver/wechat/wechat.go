@@ -12,7 +12,7 @@ import (
 	//"github.com/objcoding/wxpay"
 )
 
-const Name config.Platform = `wechat`
+const Name = `wechat`
 
 func init() {
 	payment.Register(Name, `微信支付`, New)

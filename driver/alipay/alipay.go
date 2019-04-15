@@ -11,7 +11,7 @@ import (
 	"github.com/webx-top/payment/config"
 )
 
-const Name config.Platform = `alipay`
+const Name = `alipay`
 
 func init() {
 	payment.Register(Name, `支付宝`, New)

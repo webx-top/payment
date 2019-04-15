@@ -3,7 +3,7 @@ package config
 import "github.com/webx-top/echo"
 
 type Refund struct {
-	Platform     Platform
+	Platform     string
 	TradeNo      string  //商户订单号
 	RefundNo     string  //商户退单号（aliapy可不传）
 	TotalAmount  float64 //订单总金额（alipay可不传）

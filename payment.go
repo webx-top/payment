@@ -18,35 +18,29 @@ type Hook interface {
 
 var (
 	mutex     = &sync.RWMutex{}
-	platforms = []echo.KV{}
-	payments  = map[config.Platform]func() Hook{}
+	platforms = map[string]string{} //platform=>name: alipay=>支付宝
+	payments  = map[string]func() Hook{}
 )
 
-func Platforms() []echo.KV {
+func Platforms() map[string]string {
 	return platforms
 }
 
-func Register(platform config.Platform, name string, hook func() Hook) {
+func Name(platform string) string {
+	name, _ := platforms[platform]
+	return name
+}
+
+func Register(platform string, name string, hook func() Hook) {
 	mutex.Lock()
 	defer mutex.Unlock()
 	payments[platform] = hook
-	var exists bool
-	for i, v := range platforms {
-		if v.K == platform.String() {
-			exists = true
-			platforms[i].K = platform.String()
-			platforms[i].V = name
-			break
-		}
-	}
-	if !exists {
-		platforms = append(platforms, echo.KV{K: platform.String(), V: name})
-	}
+	platforms[platform] = name
 }
 
-func Get(name config.Platform) (hook func() Hook) {
+func Get(platform string) (hook func() Hook) {
 	mutex.RLock()
 	defer mutex.RUnlock()
-	hook, _ = payments[name]
+	hook, _ = payments[platform]
 	return hook
 }

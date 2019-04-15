@@ -11,7 +11,7 @@ const (
 )
 
 type Pay struct {
-	Platform  Platform
+	Platform  string
 	Device    Device
 	NotifyURL string
 	Subject   string
