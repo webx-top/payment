@@ -15,7 +15,7 @@ import (
 const Name config.Platform = `wechat`
 
 func init() {
-	payment.Register(Name, New)
+	payment.Register(Name, `微信支付`, New)
 }
 
 func New() payment.Hook {

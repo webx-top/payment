@@ -2,7 +2,6 @@ package payment
 
 import (
 	"sync"
-	"sort"
 
 	"github.com/webx-top/echo"
 	"github.com/webx-top/echo/param"
@@ -18,23 +17,31 @@ type Hook interface {
 }
 
 var (
-	mutex    = &sync.RWMutex{}
-	payments = map[config.Platform]func() Hook{}
+	mutex     = &sync.RWMutex{}
+	platforms = []echo.KV{}
+	payments  = map[config.Platform]func() Hook{}
 )
 
-func Platforms()[]string{
-	r:=[]string{}
-	for platform:=range payments{
-		r=append(r,string(platform))
-	}
-	sort.Strings(r) 
-	return r
+func Platforms() []echo.KV {
+	return platforms
 }
 
-func Register(name config.Platform, hook func() Hook) {
+func Register(platform config.Platform, name string, hook func() Hook) {
 	mutex.Lock()
 	defer mutex.Unlock()
-	payments[name] = hook
+	payments[platform] = hook
+	var exists bool
+	for i, v := range platforms {
+		if v.K == platform.String() {
+			exists = true
+			platforms[i].K = platform.String()
+			platforms[i].V = name
+			break
+		}
+	}
+	if !exists {
+		platforms = append(platforms, echo.KV{K: platform.String(), V: name})
+	}
 }
 
 func Get(name config.Platform) (hook func() Hook) {

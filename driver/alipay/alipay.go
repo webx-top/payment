@@ -14,7 +14,7 @@ import (
 const Name config.Platform = `alipay`
 
 func init() {
-	payment.Register(Name, New)
+	payment.Register(Name, `支付宝`, New)
 }
 
 func New() payment.Hook {
