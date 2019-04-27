@@ -1,6 +1,6 @@
 package payment
 
-import "github.com/shopspring/decimal"
+import "github.com/admpub/decimal"
 
 // CutFloat 非四舍五入的方式保留小数位数
 // @param money 金额
