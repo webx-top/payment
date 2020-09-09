@@ -2,6 +2,7 @@ package wechat
 
 import (
 	"io/ioutil"
+	"strconv"
 
 	"github.com/admpub/log"
 	"github.com/objcoding/wxpay"
@@ -72,10 +73,21 @@ func (a *Wechat) Notify(ctx echo.Context) error {
 	if !a.client.ValidSign(params) {
 		return config.ErrSignature
 	}
-	result = param.ToStringMap(params)
 	if params["return_code"] != "SUCCESS" {
 		return config.ErrPaymentFailed
 	}
+	result = param.ToStringMap(params)
+	if v, y := result[`total_fee`]; y {
+		cents, err := strconv.ParseInt(v.String(), 10, 64)
+		if err != nil {
+			log.Error(err)
+		}
+		result[`total_amount`] = param.String(payment.CutFloat(float64(cents)/100, 2))
+	}
+	if v, y := result[`transaction_id`]; y {
+		result[`trade_no`] = v
+	}
+
 	var isSuccess = true
 	var xmlString string
 	noti := wxpay.Notifies{}
