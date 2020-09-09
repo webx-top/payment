@@ -9,7 +9,6 @@ import (
 	"github.com/webx-top/echo/param"
 	"github.com/webx-top/payment"
 	"github.com/webx-top/payment/config"
-	//"github.com/objcoding/wxpay"
 )
 
 const Name = `wechat`
@@ -93,11 +92,10 @@ func (a *Wechat) Notify(ctx echo.Context) error {
 		xmlString = noti.OK()
 	}
 
-	return ctx.Blob([]byte(xmlString))
+	return ctx.XMLBlob([]byte(xmlString))
 }
 
 func (a *Wechat) Refund(cfg *config.Refund) (param.StringMap, error) {
-	result := param.StringMap{}
 	refundConfig := wxpay.Params{
 		"out_trade_no":  cfg.TradeNo,
 		"out_refund_no": cfg.RefundNo,
@@ -108,6 +106,5 @@ func (a *Wechat) Refund(cfg *config.Refund) (param.StringMap, error) {
 	if err != nil {
 		return nil, err
 	}
-	_ = resp
-	return result, err
+	return param.ToStringMap(resp), err
 }

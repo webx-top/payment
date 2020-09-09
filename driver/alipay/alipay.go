@@ -68,6 +68,7 @@ func (a *Alipay) Pay(cfg *config.Pay) (param.StringMap, error) {
 			return result, err
 		}
 		result["orderString"] = param.String(url.String())
+		result["url"] = result["orderString"]
 	default:
 		return nil, config.ErrUnknowDevice
 	}
@@ -104,6 +105,24 @@ func (a *Alipay) Refund(cfg *config.Refund) (param.StringMap, error) {
 		RefundAmount: MoneyFeeToString(cfg.RefundAmount),
 	}
 	resp, err := a.client.TradeRefund(refundConfig)
-	_ = resp
+	if err != nil {
+		return nil, err
+	}
+	refund := resp.AliPayTradeRefund // 退款信息
+	result[`code`] = param.String(refund.Code)
+	result[`msg`] = param.String(refund.Msg)
+	result[`sub_code`] = param.String(refund.SubCode)
+	result[`sub_msg`] = param.String(refund.SubMsg)
+	result[`trade_no`] = param.String(refund.TradeNo)
+	result[`out_trade_no`] = param.String(refund.OutTradeNo)
+	result[`buyer_logon_id`] = param.String(refund.BuyerLogonId)
+	result[`buyer_user_id`] = param.String(refund.BuyerUserId)
+	result[`fund_change`] = param.String(refund.FundChange)      // 本次退款是否发生了资金变化
+	result[`refund_fee`] = param.String(refund.RefundFee)        // 退款总金额
+	result[`gmt_refund_pay`] = param.String(refund.GmtRefundPay) // 退款支付时间
+	result[`store_name`] = param.String(refund.StoreName)        // 交易在支付时候的门店名称
+	//result[`refund_detail_item_list`]= param.String(refund.RefundDetailItemList)
+	result[`sign`] = param.String(resp.Sign)
+
 	return result, err
 }
