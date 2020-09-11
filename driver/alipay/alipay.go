@@ -1,7 +1,10 @@
 package alipay
 
 import (
+	"fmt"
+	"math/rand"
 	"net/url"
+	"time"
 
 	"github.com/admpub/log"
 	"github.com/smartwalle/alipay"
@@ -103,6 +106,8 @@ func (a *Alipay) Refund(cfg *config.Refund) (param.StringMap, error) {
 	refundConfig := alipay.AliPayTradeRefund{
 		OutTradeNo:   cfg.TradeNo,
 		RefundAmount: MoneyFeeToString(cfg.RefundAmount),
+		RefundReason: cfg.RefundReason,
+		OutRequestNo: fmt.Sprintf("%d%d", time.Now().Local().Unix(), rand.Intn(9999)),
 	}
 	resp, err := a.client.TradeRefund(refundConfig)
 	if err != nil {
@@ -110,6 +115,11 @@ func (a *Alipay) Refund(cfg *config.Refund) (param.StringMap, error) {
 	}
 	refund := resp.AliPayTradeRefund // 退款信息
 	result[`code`] = param.String(refund.Code)
+	if resp.IsSuccess() {
+		result[`success`] = `1`
+	} else {
+		result[`success`] = `0`
+	}
 	result[`msg`] = param.String(refund.Msg)
 	result[`sub_code`] = param.String(refund.SubCode)
 	result[`sub_msg`] = param.String(refund.SubMsg)

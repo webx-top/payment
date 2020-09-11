@@ -118,5 +118,12 @@ func (a *Wechat) Refund(cfg *config.Refund) (param.StringMap, error) {
 	if err != nil {
 		return nil, err
 	}
+	returnCode := resp.GetString("return_code")
+	resp[`success`] = ``
+	if returnCode == wxpay.Fail {
+		resp[`success`] = `0`
+	} else if returnCode == wxpay.Success {
+		resp[`success`] = `1`
+	}
 	return param.ToStringMap(resp), err
 }
