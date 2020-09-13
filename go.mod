@@ -20,7 +20,7 @@ require (
 	github.com/smartwalle/alipay/v3 v3.1.5
 	github.com/stretchr/testify v1.6.1 // indirect
 	github.com/webx-top/captcha v0.0.0-20161202061115-29e9e7f30aa0 // indirect
-	github.com/webx-top/com v0.0.2
+	github.com/webx-top/com v0.0.2 // indirect
 	github.com/webx-top/echo v2.3.5+incompatible
 	github.com/webx-top/tagfast v0.0.0-20161020041435-9a2065ce3dd2 // indirect
 	github.com/webx-top/validation v0.0.0-20200425052735-86da7bb89191 // indirect

@@ -1,7 +1,8 @@
 package config
 
 import (
-	"github.com/webx-top/com"
+	"strconv"
+
 	"github.com/webx-top/echo"
 )
 
@@ -13,7 +14,7 @@ type (
 )
 
 func (a GoodsType) String() string {
-	return com.ToStr(a)
+	return strconv.FormatInt(int64(a), 10)
 }
 
 const (
