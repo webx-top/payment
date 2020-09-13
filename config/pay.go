@@ -1,23 +1,46 @@
 package config
 
-import "github.com/webx-top/echo"
+import (
+	"github.com/webx-top/com"
+	"github.com/webx-top/echo"
+)
 
-type Device int
+type (
+	// Device 设备类型
+	Device int
+	// GoodsType 商品类型
+	GoodsType int
+)
+
+func (a GoodsType) String() string {
+	return com.ToStr(a)
+}
 
 const (
-	_ Device = iota
-	App
+	// App 在App支付
+	App = iota + 1
+	// Web 在网页上支付
 	Web
 )
 
+const (
+	// VirtualGoods 虚拟商品
+	VirtualGoods GoodsType = iota
+	// PhysicalGoods 实物类商品
+	PhysicalGoods
+)
+
 type Pay struct {
-	Platform  string
-	Device    Device
-	NotifyURL string
-	Subject   string
-	TradeNo   string
-	Amount    float64
-	Options   echo.H //其它选项
+	Platform       string
+	Device         Device
+	NotifyURL      string
+	ReturnURL      string
+	Subject        string
+	TradeNo        string
+	Amount         float64
+	GoodsType      GoodsType
+	PassbackParams string // 回传参数
+	Options        echo.H //其它选项
 }
 
 func (pay *Pay) DeviceType() string {
@@ -26,6 +49,17 @@ func (pay *Pay) DeviceType() string {
 		return "APP"
 	case Web:
 		return "WEB"
+	default:
+		return ""
+	}
+}
+
+func (pay *Pay) GoodsTypeName() string {
+	switch pay.GoodsType {
+	case VirtualGoods:
+		return "VirtualGoods"
+	case PhysicalGoods:
+		return "PhysicalGoods"
 	default:
 		return ""
 	}

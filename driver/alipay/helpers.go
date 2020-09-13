@@ -3,7 +3,7 @@ package alipay
 import (
 	"net/url"
 
-	"github.com/smartwalle/alipay"
+	alipay "github.com/smartwalle/alipay/v3"
 	"github.com/webx-top/echo/param"
 	"github.com/webx-top/payment"
 	"github.com/webx-top/payment/config"
@@ -32,7 +32,7 @@ func (a *Alipay) getAlipayTradeNotification(req url.Values) (*alipay.TradeNotifi
 	noti.NotifyType = req.Get("notify_type")
 	noti.NotifyTime = req.Get("notify_time")
 	noti.TradeNo = req.Get("trade_no")
-	noti.TradeStatus = req.Get("trade_status")
+	noti.TradeStatus = alipay.TradeStatus(req.Get("trade_status"))
 	noti.TotalAmount = req.Get("total_amount")
 	noti.ReceiptAmount = req.Get("receipt_amount")
 	noti.InvoiceAmount = req.Get("invoice_amount")

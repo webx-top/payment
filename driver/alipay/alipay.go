@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/admpub/log"
-	"github.com/smartwalle/alipay"
+	alipay "github.com/smartwalle/alipay/v3"
 	"github.com/webx-top/echo"
 	"github.com/webx-top/echo/param"
 	"github.com/webx-top/payment"
@@ -26,7 +26,7 @@ func New() payment.Hook {
 
 type Alipay struct {
 	account        *config.Account
-	client         *alipay.AliPay
+	client         *alipay.Client
 	notifyCallback func(echo.Context) error
 }
 
@@ -37,36 +37,60 @@ func (a *Alipay) SetNotifyCallback(callback func(echo.Context) error) payment.Ho
 
 func (a *Alipay) SetAccount(account *config.Account) payment.Hook {
 	a.account = account
-	a.client = alipay.New(
-		account.AppID,
-		account.PublicKey,
-		account.PrivateKey,
-		!account.Debug,
-	)
 	return a
 }
 
+func (a *Alipay) Client() *alipay.Client {
+	if a.client != nil {
+		return a.client
+	}
+	var err error
+	a.client, err = alipay.New(
+		a.account.AppID,
+		a.account.PrivateKey,
+		!a.account.Debug,
+		alipay.WithTimeLocation(time.Local),
+	)
+	if err != nil {
+		panic(err)
+	}
+	if len(a.account.PublicKey) > 0 {
+		if err := a.client.LoadAppPublicCert(a.account.PublicKey); err != nil {
+			log.Error(err)
+		}
+	}
+	if len(a.account.CertPath) > 0 {
+		if err := a.client.LoadAppPublicCertFromFile(a.account.CertPath); err != nil {
+			log.Error(err)
+		}
+	}
+	return a.client
+}
+
 func (a *Alipay) Pay(cfg *config.Pay) (param.StringMap, error) {
-	payConfig := alipay.TradePay{
-		NotifyURL:   cfg.NotifyURL,
-		Subject:     cfg.Subject,
-		OutTradeNo:  cfg.TradeNo,
-		TotalAmount: MoneyFeeToString(cfg.Amount),
-		ProductCode: "QUICK_WAP_WAY",
+	payConfig := alipay.Trade{
+		NotifyURL:      cfg.NotifyURL,
+		ReturnURL:      cfg.ReturnURL,
+		Subject:        cfg.Subject,
+		OutTradeNo:     cfg.TradeNo,
+		TotalAmount:    MoneyFeeToString(cfg.Amount),
+		ProductCode:    "FAST_INSTANT_TRADE_PAY",
+		GoodsType:      cfg.GoodsType.String(),
+		PassbackParams: cfg.PassbackParams,
 	}
 	var err error
 	result := param.StringMap{}
 	switch cfg.Device {
 	case config.App:
-		pay := alipay.AliPayTradeAppPay{TradePay: payConfig}
-		results, err := a.client.TradeAppPay(pay)
+		pay := alipay.TradeAppPay{Trade: payConfig}
+		results, err := a.Client().TradeAppPay(pay)
 		if err != nil {
 			return result, err
 		}
 		result["orderString"] = param.String(results)
 	case config.Web:
-		pay := alipay.AliPayTradePagePay{TradePay: payConfig}
-		url, err := a.client.TradePagePay(pay)
+		pay := alipay.TradePagePay{Trade: payConfig}
+		url, err := a.Client().TradePagePay(pay)
 		if err != nil {
 			return result, err
 		}
@@ -103,17 +127,20 @@ func (a *Alipay) Notify(ctx echo.Context) error {
 
 func (a *Alipay) Refund(cfg *config.Refund) (param.StringMap, error) {
 	result := param.StringMap{}
-	refundConfig := alipay.AliPayTradeRefund{
+	refundConfig := alipay.TradeRefund{
 		OutTradeNo:   cfg.TradeNo,
 		RefundAmount: MoneyFeeToString(cfg.RefundAmount),
 		RefundReason: cfg.RefundReason,
 		OutRequestNo: fmt.Sprintf("%d%d", time.Now().Local().Unix(), rand.Intn(9999)),
+		OperatorId:   ``, // 可选 商户的操作员编号
+		StoreId:      ``, // 可选 商户的门店编号
+		TerminalId:   ``, // 可选 商户的终端编号
 	}
-	resp, err := a.client.TradeRefund(refundConfig)
+	resp, err := a.Client().TradeRefund(refundConfig)
 	if err != nil {
 		return nil, err
 	}
-	refund := resp.AliPayTradeRefund // 退款信息
+	refund := resp.Content // 退款信息
 	result[`code`] = param.String(refund.Code)
 	if resp.IsSuccess() {
 		result[`success`] = `1`
