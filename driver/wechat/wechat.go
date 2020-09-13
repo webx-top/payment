@@ -62,6 +62,13 @@ func (a *Wechat) Pay(cfg *config.Pay) (param.StringMap, error) {
 		"total_fee":    MoneyFeeToString(cfg.Amount),
 		"out_trade_no": cfg.TradeNo,
 		"body":         cfg.Subject,
+		"scene_info":   ``,
+	}
+	if cfg.Options != nil {
+		params := cfg.Options.Store(`params`)
+		for k := range params {
+			wxParams[k] = params.String(k)
+		}
 	}
 	params, err := a.client.UnifiedOrder(wxParams)
 	if err != nil {
