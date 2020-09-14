@@ -138,11 +138,15 @@ func (a *Paypal) Notify(ctx echo.Context) error {
 		}
 	case paypal.K_EVENT_TYPE_PAYMENT_SALE_REFUNDED:
 		refund := event.Refund()
+		if refund.State != paypal.K_REFUND_STATE_COMPLETED {
+			return nil
+		}
 		notify := param.StringMap{}
 		notify[`operation`] = `refund`
 		notify[`trade_no`] = param.String(refund.SaleId)
 		notify[`out_trade_no`] = param.String(refund.InvoiceNumber)
 		notify[`total_amount`] = param.String(refund.Amount.Total)
+
 		if a.notifyCallback != nil {
 			ctx.Set(`notify`, notify)
 			if err := a.notifyCallback(ctx); err != nil {
