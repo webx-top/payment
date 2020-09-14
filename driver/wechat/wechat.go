@@ -1,11 +1,16 @@
 package wechat
 
 import (
+	"encoding/base64"
+	"fmt"
 	"io/ioutil"
 	"strconv"
+	"strings"
 
 	"github.com/admpub/log"
 	"github.com/objcoding/wxpay"
+	"github.com/webx-top/codec"
+	"github.com/webx-top/com"
 	"github.com/webx-top/echo"
 	"github.com/webx-top/echo/param"
 	"github.com/webx-top/payment"
@@ -60,7 +65,7 @@ func (a *Wechat) Pay(cfg *config.Pay) (param.StringMap, error) {
 		"notify_url":   cfg.NotifyURL,
 		"trade_type":   cfg.DeviceType(),
 		"total_fee":    MoneyFeeToString(cfg.Amount),
-		"out_trade_no": cfg.TradeNo,
+		"out_trade_no": cfg.OutTradeNo,
 		"body":         cfg.Subject,
 		"scene_info":   ``,
 	}
@@ -104,6 +109,21 @@ func (a *Wechat) Notify(ctx echo.Context) error {
 		result[`trade_no`] = v
 	}
 
+	result[`operation`] = `payment`
+	if reqInfo, y := result[`req_info`]; y {
+		result[`operation`] = `refund`
+		b, err := base64.StdEncoding.DecodeString(reqInfo.String())
+		if err != nil {
+			fmt.Println(b, err)
+			return nil
+		}
+		key := strings.ToLower(com.Md5(a.account.AppSecret))
+		crypto := codec.NewAesECBCrypto(`AES-256`)
+		b = crypto.DecodeBytes(b, []byte(key))
+		for k, v := range XmlToMap(string(b)) {
+			result[k] = param.String(v)
+		}
+	}
 	var isSuccess = true
 	var xmlString string
 	noti := wxpay.Notifies{}
@@ -125,8 +145,8 @@ func (a *Wechat) Notify(ctx echo.Context) error {
 
 func (a *Wechat) Refund(cfg *config.Refund) (param.StringMap, error) {
 	refundConfig := wxpay.Params{
-		"out_trade_no":  cfg.TradeNo,
-		"out_refund_no": cfg.RefundNo,
+		"out_trade_no":  cfg.OutTradeNo,
+		"out_refund_no": cfg.OutRefundNo,
 		"total_fee":     MoneyFeeToString(cfg.TotalAmount),
 		"refund_fee":    MoneyFeeToString(cfg.RefundAmount),
 	}

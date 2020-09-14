@@ -72,7 +72,7 @@ func (a *Alipay) Pay(cfg *config.Pay) (param.StringMap, error) {
 		NotifyURL:      cfg.NotifyURL,
 		ReturnURL:      cfg.ReturnURL,
 		Subject:        cfg.Subject,
-		OutTradeNo:     cfg.TradeNo,
+		OutTradeNo:     cfg.OutTradeNo,
 		TotalAmount:    MoneyFeeToString(cfg.Amount),
 		ProductCode:    "FAST_INSTANT_TRADE_PAY",
 		GoodsType:      cfg.GoodsType.String(),
@@ -108,6 +108,11 @@ func (a *Alipay) Notify(ctx echo.Context) error {
 	if err != nil {
 		log.Error(err)
 		return err
+	}
+
+	notify[`operation`] = `payment`
+	if notify.Float64(`refund_fee`) > 0 {
+		notify[`operation`] = `refund`
 	}
 	var isSuccess = true
 	if a.notifyCallback != nil {

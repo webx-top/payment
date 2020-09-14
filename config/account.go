@@ -15,6 +15,7 @@ type Options struct {
 	Name      string `json:"name"`
 }
 
+// Account 付款平台账号参数
 type Account struct {
 	Debug      bool    `json:"debug"`
 	AppID      string  `json:"appID"`      //即AppID
@@ -23,6 +24,7 @@ type Account struct {
 	PublicKey  string  `json:"publicKey"`  //公钥
 	PrivateKey string  `json:"privateKey"` //私钥
 	CertPath   string  `json:"certPath"`   //证书路径
+	WebhookID  string  `json:"webhookID"`  // paypal使用的webhook id
 	Options    Options `json:"options"`    //其它选项
 }
 
@@ -34,6 +36,7 @@ func (c *Account) FromStore(v echo.Store) *Account {
 	c.PublicKey = v.String(`publicKey`)
 	c.PrivateKey = v.String(`privateKey`)
 	c.CertPath = v.String(`certPath`)
+	c.WebhookID = v.String(`webhookID`)
 	options := v.Store(`options`)
 	c.Options.IconClass = options.String(`iconClass`)
 	c.Options.IconImage = options.String(`iconImage`)
