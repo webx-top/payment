@@ -20,19 +20,6 @@ type Pay struct {
 	Options        echo.H    //其它选项
 }
 
-func (pay *Pay) DeviceType() string {
-	switch pay.Device {
-	case App:
-		return "APP"
-	case Web:
-		return "WEB"
-	case Wap:
-		return "WAP"
-	default:
-		return ""
-	}
-}
-
 func (pay *Pay) GoodsTypeName() string {
 	switch pay.GoodsType {
 	case VirtualGoods:

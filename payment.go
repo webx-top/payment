@@ -12,10 +12,10 @@ import (
 type Hook interface {
 	SetNotifyCallback(callback func(echo.Context) error) Hook
 	SetAccount(*config.Account) Hook
-	Pay(*config.Pay) (param.StringMap, error)
+	Pay(echo.Context, *config.Pay) (param.StringMap, error)
 	Query(echo.Context, *config.Query) (config.TradeStatus, error)
 	Notify(echo.Context) error
-	Refund(*config.Refund) (param.StringMap, error)
+	Refund(echo.Context, *config.Refund) (param.StringMap, error)
 }
 
 var (

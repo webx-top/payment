@@ -46,7 +46,7 @@ func (a *Paypal) Client() *paypal.Client {
 	return a.client
 }
 
-func (a *Paypal) Pay(cfg *config.Pay) (param.StringMap, error) {
+func (a *Paypal) Pay(ctx echo.Context, cfg *config.Pay) (param.StringMap, error) {
 	result := param.StringMap{}
 	var p = &paypal.Payment{}
 	p.Intent = paypal.K_PAYMENT_INTENT_SALE
@@ -176,7 +176,7 @@ func (a *Paypal) Notify(ctx echo.Context) error {
 	return nil
 }
 
-func (a *Paypal) Refund(cfg *config.Refund) (param.StringMap, error) {
+func (a *Paypal) Refund(ctx echo.Context, cfg *config.Refund) (param.StringMap, error) {
 	result := param.StringMap{}
 	refundConfig := &paypal.RefundSaleParam{
 		Amount: &paypal.Amount{

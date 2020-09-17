@@ -4,15 +4,30 @@ import "strconv"
 
 type (
 	// Device 设备类型
-	Device int
+	Device string
 	// GoodsType 商品类型
 	GoodsType int
 	// Currency 币种
 	Currency string
 )
 
+func (a Device) String() string {
+	return string(a)
+}
+
 func (a GoodsType) String() string {
 	return strconv.FormatInt(int64(a), 10)
+}
+
+func (a GoodsType) Name() string {
+	switch a {
+	case VirtualGoods:
+		return "VirtualGoods"
+	case PhysicalGoods:
+		return "PhysicalGoods"
+	default:
+		return ""
+	}
 }
 
 func (c Currency) String() string {
@@ -24,11 +39,11 @@ func (c Currency) String() string {
 
 const (
 	// App 在App支付
-	App = iota + 1
+	App Device = `app`
 	// Web 在电脑端网页上支付
-	Web
+	Web Device = `web`
 	// Wap 在手机端网页上支付
-	Wap
+	Wap Device = `wap`
 )
 
 const (

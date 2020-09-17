@@ -61,10 +61,24 @@ func (a *Wechat) Client() *wxpay.Client {
 	return a.client
 }
 
-func (a *Wechat) Pay(cfg *config.Pay) (param.StringMap, error) {
+func (a *Wechat) Pay(ctx echo.Context, cfg *config.Pay) (param.StringMap, error) {
+	var tradeType string
+	switch cfg.Device {
+	case config.Web:
+		tradeType = `NATIVE`
+	case config.Wap:
+		tradeType = `MWEB`
+	case config.App:
+		tradeType = `App`
+	default:
+		tradeType = `MWEB`
+	}
+	if strings.Contains(ctx.Request().UserAgent(), `MicroMessenger`) {
+		tradeType = `JSAPI`
+	}
 	wxParams := wxpay.Params{
 		"notify_url":   cfg.NotifyURL,
-		"trade_type":   cfg.DeviceType(), //JSAPI:JSAPI支付（或小程序支付）、NATIVE:Native支付、APP:app支付，MWEB:H5支付
+		"trade_type":   tradeType, //JSAPI:JSAPI支付（或小程序支付）、NATIVE:Native支付、APP:app支付，MWEB:H5支付
 		"total_fee":    MoneyFeeToString(cfg.Amount),
 		"out_trade_no": cfg.OutTradeNo,
 		"body":         cfg.Subject,
@@ -179,7 +193,7 @@ func (a *Wechat) Query(ctx echo.Context, cfg *config.Query) (config.TradeStatus,
 	return config.NewTradeStatus(tradeStatus), err
 }
 
-func (a *Wechat) Refund(cfg *config.Refund) (param.StringMap, error) {
+func (a *Wechat) Refund(ctx echo.Context, cfg *config.Refund) (param.StringMap, error) {
 	refundConfig := wxpay.Params{
 		"out_trade_no":  cfg.OutTradeNo,
 		"out_refund_no": cfg.OutRefundNo,

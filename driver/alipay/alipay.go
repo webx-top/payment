@@ -68,7 +68,7 @@ func (a *Alipay) Client() *alipay.Client {
 	return a.client
 }
 
-func (a *Alipay) Pay(cfg *config.Pay) (param.StringMap, error) {
+func (a *Alipay) Pay(ctx echo.Context, cfg *config.Pay) (param.StringMap, error) {
 	payConfig := alipay.Trade{
 		NotifyURL:      cfg.NotifyURL,
 		ReturnURL:      cfg.ReturnURL,
@@ -164,7 +164,7 @@ func (a *Alipay) Query(ctx echo.Context, cfg *config.Query) (config.TradeStatus,
 	return config.NewTradeStatus(string(resp.Content.TradeStatus)), err
 }
 
-func (a *Alipay) Refund(cfg *config.Refund) (param.StringMap, error) {
+func (a *Alipay) Refund(ctx echo.Context, cfg *config.Refund) (param.StringMap, error) {
 	result := param.StringMap{}
 	refundConfig := alipay.TradeRefund{
 		OutTradeNo:   cfg.TradeNo,
