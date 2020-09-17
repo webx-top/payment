@@ -86,19 +86,23 @@ func (a *Paypal) Finish(ctx echo.Context) (param.StringMap, error) {
 		return nil, err
 	}
 	var (
-		paid        bool
-		tradeNo     string
-		outOrderNo  string
-		totalAmount string
+		paid                   bool
+		tradeNo                string
+		outOrderNo             string
+		totalAmount            string
+		transactionFeeValue    string // 交易手续费金额
+		transactionFeeCurrency string // 交易手续费币种
 	)
 	if payment.State == paypal.K_PAYMENT_STATE_APPROVED {
 		paid = true
 	}
 	for _, transaction := range payment.Transactions {
+		outOrderNo = transaction.InvoiceNumber
 		for _, resource := range transaction.RelatedResources {
 			tradeNo = resource.Sale.Id
-			outOrderNo = resource.Sale.InvoiceNumber
 			totalAmount = resource.Sale.Amount.Total
+			transactionFeeValue = resource.Sale.TransactionFee.Value
+			transactionFeeCurrency = resource.Sale.TransactionFee.Currency
 			if resource.Sale.State != paypal.K_SALE_STATE_COMPLETED {
 				paid = false
 				break
@@ -115,6 +119,9 @@ func (a *Paypal) Finish(ctx echo.Context) (param.StringMap, error) {
 	notify[`trade_no`] = param.String(tradeNo)        // 作为交易流水号
 	notify[`out_trade_no`] = param.String(outOrderNo) // 保存我方订单号
 	notify[`total_amount`] = param.String(totalAmount)
+	notify[`total_amount`] = param.String(totalAmount)
+	notify[`transaction_fee_value`] = param.String(transactionFeeValue)
+	notify[`transaction_fee_currency`] = param.String(transactionFeeCurrency)
 	return notify, err
 }
 
@@ -133,7 +140,10 @@ func (a *Paypal) Notify(ctx echo.Context) error {
 		notify[`operation`] = `payment`
 		notify[`trade_no`] = param.String(sale.Id)                // 作为交易流水号
 		notify[`out_trade_no`] = param.String(sale.InvoiceNumber) // 保存我方订单号
-		notify[`total_amount`] = param.String(sale.Amount.Total)
+		notify[`total_amount`] = param.String(sale.Amount.Total)  // 付款金额
+		// 交易手续费
+		notify[`transaction_fee_value`] = param.String(sale.TransactionFee.Value)       // 金额
+		notify[`transaction_fee_currency`] = param.String(sale.TransactionFee.Currency) // 币种
 		if a.notifyCallback != nil {
 			ctx.Set(`notify`, notify)
 			if err := a.notifyCallback(ctx); err != nil {
