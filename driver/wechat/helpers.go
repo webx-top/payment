@@ -3,7 +3,6 @@ package wechat
 import (
 	"encoding/xml"
 	"io/ioutil"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -47,7 +46,7 @@ func XmlToMap(xmlStr string) wxpay.Params {
 	return params
 }
 
-func (a *Wechat) VerifySign(ctx echo.Context, req url.Values) error {
+func (a *Wechat) VerifySign(ctx echo.Context) error {
 	body := ctx.Request().Body()
 	defer body.Close()
 	b, err := ioutil.ReadAll(body)

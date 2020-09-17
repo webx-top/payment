@@ -1,7 +1,6 @@
 package payment
 
 import (
-	"net/url"
 	"sync"
 
 	"github.com/webx-top/echo"
@@ -17,7 +16,7 @@ type Hook interface {
 	Query(echo.Context, *config.Query) (config.TradeStatus, error)
 	Notify(echo.Context) error
 	Refund(echo.Context, *config.Refund) (param.StringMap, error)
-	VerifySign(echo.Context, url.Values) error
+	VerifySign(echo.Context) error
 }
 
 var (

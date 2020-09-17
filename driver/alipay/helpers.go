@@ -10,8 +10,8 @@ import (
 	"github.com/webx-top/payment/config"
 )
 
-func (a *Alipay) VerifySign(ctx echo.Context, req url.Values) error {
-	return a.verifySign(req)
+func (a *Alipay) VerifySign(ctx echo.Context) error {
+	return a.verifySign(ctx.Forms())
 }
 
 func (a *Alipay) verifySign(req url.Values) error {
