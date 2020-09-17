@@ -54,7 +54,7 @@ func (a *Paypal) Pay(cfg *config.Pay) (param.StringMap, error) {
 	p.Payer.PaymentMethod = paypal.K_PAYMENT_METHOD_PAYPAL
 	p.RedirectURLs = &paypal.RedirectURLs{}
 	p.RedirectURLs.CancelURL = cfg.ReturnURL
-	p.RedirectURLs.ReturnURL = cfg.NotifyURL
+	p.RedirectURLs.ReturnURL = cfg.ReturnURL
 
 	var transaction = &paypal.Transaction{}
 	transaction.InvoiceNumber = cfg.OutTradeNo // 保存我方订单号
