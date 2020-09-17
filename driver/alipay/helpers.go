@@ -10,7 +10,7 @@ import (
 )
 
 func (a *Alipay) verifySign(req url.Values) error {
-	ok, err := a.client.VerifySign(req)
+	ok, err := a.Client().VerifySign(req)
 	if err != nil {
 		return err
 	}
