@@ -90,6 +90,7 @@ func (a *Paypal) Finish(ctx echo.Context) (param.StringMap, error) {
 		tradeNo                string
 		outOrderNo             string
 		totalAmount            string
+		currency               string
 		transactionFeeValue    string // 交易手续费金额
 		transactionFeeCurrency string // 交易手续费币种
 	)
@@ -101,6 +102,7 @@ func (a *Paypal) Finish(ctx echo.Context) (param.StringMap, error) {
 		for _, resource := range transaction.RelatedResources {
 			tradeNo = resource.Sale.Id
 			totalAmount = resource.Sale.Amount.Total
+			currency = resource.Sale.Amount.Currency
 			transactionFeeValue = resource.Sale.TransactionFee.Value
 			transactionFeeCurrency = resource.Sale.TransactionFee.Currency
 			if resource.Sale.State != paypal.K_SALE_STATE_COMPLETED {
@@ -119,7 +121,7 @@ func (a *Paypal) Finish(ctx echo.Context) (param.StringMap, error) {
 	notify[`trade_no`] = param.String(tradeNo)        // 作为交易流水号
 	notify[`out_trade_no`] = param.String(outOrderNo) // 保存我方订单号
 	notify[`total_amount`] = param.String(totalAmount)
-	notify[`total_amount`] = param.String(totalAmount)
+	notify[`currency`] = param.String(currency)
 	notify[`transaction_fee_value`] = param.String(transactionFeeValue)
 	notify[`transaction_fee_currency`] = param.String(transactionFeeCurrency)
 	return notify, err
@@ -141,6 +143,7 @@ func (a *Paypal) Notify(ctx echo.Context) error {
 		notify[`trade_no`] = param.String(sale.Id)                // 作为交易流水号
 		notify[`out_trade_no`] = param.String(sale.InvoiceNumber) // 保存我方订单号
 		notify[`total_amount`] = param.String(sale.Amount.Total)  // 付款金额
+		notify[`currency`] = param.String(sale.Amount.Currency)   // 付款币种
 		// 交易手续费
 		notify[`transaction_fee_value`] = param.String(sale.TransactionFee.Value)       // 金额
 		notify[`transaction_fee_currency`] = param.String(sale.TransactionFee.Currency) // 币种
@@ -157,6 +160,7 @@ func (a *Paypal) Notify(ctx echo.Context) error {
 		notify[`trade_no`] = param.String(refund.SaleId)
 		notify[`out_trade_no`] = param.String(refund.InvoiceNumber)
 		notify[`total_amount`] = param.String(refund.Amount.Total)
+		notify[`currency`] = param.String(refund.Amount.Currency) // 付款币种
 		if a.notifyCallback != nil {
 			ctx.Set(`notify`, notify)
 			if err := a.notifyCallback(ctx); err != nil {
@@ -193,7 +197,7 @@ func (a *Paypal) Refund(cfg *config.Refund) (param.StringMap, error) {
 	result[`id`] = param.String(refund.Id)
 	result[`trade_no`] = param.String(refund.SaleId)
 	result[`out_trade_no`] = param.String(refund.InvoiceNumber)
-	result[`refund_fee`] = param.String(refund.Amount.Total) // 退款总金额
-
+	result[`refund_fee`] = param.String(refund.Amount.Total)  // 退款总金额
+	result[`currency`] = param.String(refund.Amount.Currency) // 付款币种
 	return result, err
 }
