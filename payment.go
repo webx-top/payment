@@ -8,12 +8,18 @@ import (
 	"github.com/webx-top/payment/config"
 )
 
+// Hook 付款驱动接口
 type Hook interface {
 	SetNotifyCallback(callback func(echo.Context) error) Hook
 	SetAccount(*config.Account) Hook
 	Pay(*config.Pay) (param.StringMap, error)
 	Notify(echo.Context) error
 	Refund(*config.Refund) (param.StringMap, error)
+}
+
+// Finish 付款完成后的数据获取处理
+type Finish interface {
+	Finish(echo.Context) (param.StringMap, error)
 }
 
 var (

@@ -78,41 +78,45 @@ func (a *Paypal) Pay(cfg *config.Pay) (param.StringMap, error) {
 	return result, err
 }
 
-// func (a *Paypal) PaymentFinish(ctx echo.Context) error {
-// 	paymentId := ctx.Form(`paymentId`)
-// 	playerId := ctx.Form(`PayerID`)
-// 	payment, err := a.Client().ExecuteApprovedPayment(paymentId, playerId)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	var paid bool
-// 	if payment.State == paypal.K_PAYMENT_STATE_APPROVED {
-// 		paid = true
-// 		for _, transaction := range payment.Transactions {
-// 			for _, resource := range transaction.RelatedResources {
-// 				if resource.Sale.State != paypal.K_SALE_STATE_COMPLETED {
-// 					paid = false
-// 					break
-// 				}
-// 			}
-// 		}
-// 	}
-// 	notify := param.StringMap{}
+func (a *Paypal) Finish(ctx echo.Context) (param.StringMap, error) {
+	paymentID := ctx.Form(`paymentId`)
+	playerID := ctx.Form(`PayerID`)
+	payment, err := a.Client().ExecuteApprovedPayment(paymentID, playerID)
+	if err != nil {
+		return nil, err
+	}
+	var (
+		paid        bool
+		tradeNo     string
+		outOrderNo  string
+		totalAmount string
+	)
+	if payment.State == paypal.K_PAYMENT_STATE_APPROVED {
+		paid = true
+	}
+	for _, transaction := range payment.Transactions {
+		for _, resource := range transaction.RelatedResources {
+			tradeNo = resource.Sale.Id
+			outOrderNo = resource.Sale.InvoiceNumber
+			totalAmount = resource.Sale.Amount.Total
+			if resource.Sale.State != paypal.K_SALE_STATE_COMPLETED {
+				paid = false
+				break
+			}
+		}
+	}
+	notify := param.StringMap{}
+	if paid {
+		notify[`paid`] = param.String(`1`)
+	} else {
+		notify[`paid`] = param.String(`0`)
+	}
 
-// 	if a.notifyCallback != nil {
-// 		ctx.Set(`notify`, notify)
-// 		ctx.Set(`paid`, paid)
-// 		if err := a.notifyCallback(ctx); err != nil {
-// 			isSuccess = false
-// 		}
-// 	}
-// 	if isSuccess {
-// 		err = config.NewOKString(`success`)
-// 	} else {
-// 		err = config.NewOKString(`faild`)
-// 	}
-// 	return ctx.String(err.Error())
-// }
+	notify[`trade_no`] = param.String(tradeNo)        // 作为交易流水号
+	notify[`out_trade_no`] = param.String(outOrderNo) // 保存我方订单号
+	notify[`total_amount`] = param.String(totalAmount)
+	return notify, err
+}
 
 func (a *Paypal) Notify(ctx echo.Context) error {
 	event, err := a.Client().GetWebhookEvent(a.account.WebhookID, ctx.Request().StdRequest())
@@ -138,21 +142,19 @@ func (a *Paypal) Notify(ctx echo.Context) error {
 		}
 	case paypal.K_EVENT_TYPE_PAYMENT_SALE_REFUNDED:
 		refund := event.Refund()
-		if refund.State != paypal.K_REFUND_STATE_COMPLETED {
-			return nil
-		}
 		notify := param.StringMap{}
 		notify[`operation`] = `refund`
 		notify[`trade_no`] = param.String(refund.SaleId)
 		notify[`out_trade_no`] = param.String(refund.InvoiceNumber)
 		notify[`total_amount`] = param.String(refund.Amount.Total)
-
 		if a.notifyCallback != nil {
 			ctx.Set(`notify`, notify)
 			if err := a.notifyCallback(ctx); err != nil {
 				return err
 			}
 		}
+	default:
+		println(`event.EventType: `, event.EventType, echo.Dump(event, false))
 	}
 	return nil
 }
