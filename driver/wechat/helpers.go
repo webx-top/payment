@@ -2,11 +2,14 @@ package wechat
 
 import (
 	"encoding/xml"
+	"io/ioutil"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/objcoding/wxpay"
+	"github.com/webx-top/echo"
 	"github.com/webx-top/payment"
 	"github.com/webx-top/payment/config"
 )
@@ -42,6 +45,20 @@ func XmlToMap(xmlStr string) wxpay.Params {
 	}
 
 	return params
+}
+
+func (a *Wechat) VerifySign(ctx echo.Context, req url.Values) error {
+	body := ctx.Request().Body()
+	defer body.Close()
+	b, err := ioutil.ReadAll(body)
+	if err != nil {
+		return err
+	}
+	params := wxpay.XmlToMap(string(b))
+	if !a.Client().ValidSign(params) {
+		return config.ErrSignature
+	}
+	return nil
 }
 
 func (a *Wechat) translateWxpayAppResult(tradePay *config.Pay, params wxpay.Params) map[string]string {

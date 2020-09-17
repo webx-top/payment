@@ -4,10 +4,15 @@ import (
 	"net/url"
 
 	alipay "github.com/smartwalle/alipay/v3"
+	"github.com/webx-top/echo"
 	"github.com/webx-top/echo/param"
 	"github.com/webx-top/payment"
 	"github.com/webx-top/payment/config"
 )
+
+func (a *Alipay) VerifySign(ctx echo.Context, req url.Values) error {
+	return a.verifySign(req)
+}
 
 func (a *Alipay) verifySign(req url.Values) error {
 	ok, err := a.Client().VerifySign(req)
