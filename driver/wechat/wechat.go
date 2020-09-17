@@ -2,6 +2,7 @@ package wechat
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"strconv"
@@ -63,7 +64,7 @@ func (a *Wechat) Client() *wxpay.Client {
 func (a *Wechat) Pay(cfg *config.Pay) (param.StringMap, error) {
 	wxParams := wxpay.Params{
 		"notify_url":   cfg.NotifyURL,
-		"trade_type":   cfg.DeviceType(),
+		"trade_type":   cfg.DeviceType(), //JSAPI:JSAPI支付（或小程序支付）、NATIVE:Native支付、APP:app支付，MWEB:H5支付
 		"total_fee":    MoneyFeeToString(cfg.Amount),
 		"out_trade_no": cfg.OutTradeNo,
 		"body":         cfg.Subject,
@@ -75,7 +76,7 @@ func (a *Wechat) Pay(cfg *config.Pay) (param.StringMap, error) {
 			wxParams[k] = params.String(k)
 		}
 	}
-	params, err := a.client.UnifiedOrder(wxParams)
+	params, err := a.Client().UnifiedOrder(wxParams)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +92,7 @@ func (a *Wechat) Notify(ctx echo.Context) error {
 		return err
 	}
 	params := wxpay.XmlToMap(string(b))
-	if !a.client.ValidSign(params) {
+	if !a.Client().ValidSign(params) {
 		return config.ErrSignature
 	}
 	if params["return_code"] != "SUCCESS" {
@@ -143,6 +144,41 @@ func (a *Wechat) Notify(ctx echo.Context) error {
 	return ctx.XMLBlob([]byte(xmlString))
 }
 
+func (a *Wechat) Query(ctx echo.Context, cfg *config.Query) (config.TradeStatus, error) {
+	params := make(wxpay.Params)
+	if len(cfg.TradeNo) > 0 {
+		params.SetString("transaction_id", cfg.TradeNo)
+	} else {
+		params.SetString("out_trade_no", cfg.OutTradeNo)
+	}
+	resp, err := a.Client().OrderQuery(params)
+	if err != nil {
+		return config.EmptyTradeStatus, err
+	}
+	if resp.GetString(`return_code`) != wxpay.Success {
+		return config.EmptyTradeStatus, errors.New(resp.GetString(`return_msg`))
+	}
+	tradeStatus := resp.GetString(`trade_state`)
+	/*
+		SUCCESS—支付成功
+		REFUND—转入退款
+		NOTPAY—未支付
+		CLOSED—已关闭
+		REVOKED—已撤销（付款码支付）
+		USERPAYING--用户支付中（付款码支付）
+		PAYERROR--支付失败(其他原因，如银行返回失败)
+	*/
+	switch tradeStatus {
+	case `SUCCESS`:
+		tradeStatus = config.TradeStatusSuccess
+	case `REFUND`, `CLOSED`:
+		tradeStatus = config.TradeStatusClosed
+	case `NOTPAY`, `REVOKED`, `USERPAYING`, `PAYERROR`:
+		tradeStatus = config.TradeStatusWaitBuyerPay
+	}
+	return config.NewTradeStatus(tradeStatus), err
+}
+
 func (a *Wechat) Refund(cfg *config.Refund) (param.StringMap, error) {
 	refundConfig := wxpay.Params{
 		"out_trade_no":  cfg.OutTradeNo,
@@ -150,7 +186,7 @@ func (a *Wechat) Refund(cfg *config.Refund) (param.StringMap, error) {
 		"total_fee":     MoneyFeeToString(cfg.TotalAmount),
 		"refund_fee":    MoneyFeeToString(cfg.RefundAmount),
 	}
-	resp, err := a.client.Refund(refundConfig)
+	resp, err := a.Client().Refund(refundConfig)
 	if err != nil {
 		return nil, err
 	}

@@ -53,7 +53,7 @@ func (a *Wechat) translateWxpayAppResult(tradePay *config.Pay, params wxpay.Para
 		p["prepayid"] = params["prepay_id"]
 		p["timestamp"] = strconv.FormatInt(time.Now().Unix(), 10)
 		p["package"] = "Sign=WXPay"
-		p["sign"] = a.client.Sign(p)
+		p["sign"] = a.Client().Sign(p)
 		return map[string]string(p)
 	}
 	return map[string]string(params)

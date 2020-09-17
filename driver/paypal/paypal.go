@@ -53,7 +53,7 @@ func (a *Paypal) Pay(cfg *config.Pay) (param.StringMap, error) {
 	p.Payer = &paypal.Payer{}
 	p.Payer.PaymentMethod = paypal.K_PAYMENT_METHOD_PAYPAL
 	p.RedirectURLs = &paypal.RedirectURLs{}
-	p.RedirectURLs.CancelURL = cfg.ReturnURL
+	p.RedirectURLs.CancelURL = cfg.CancelURL
 	p.RedirectURLs.ReturnURL = cfg.ReturnURL
 
 	var transaction = &paypal.Transaction{}
@@ -78,12 +78,12 @@ func (a *Paypal) Pay(cfg *config.Pay) (param.StringMap, error) {
 	return result, err
 }
 
-func (a *Paypal) Finish(ctx echo.Context) (param.StringMap, error) {
+func (a *Paypal) Query(ctx echo.Context, cfg *config.Query) (config.TradeStatus, error) {
 	paymentID := ctx.Form(`paymentId`)
 	playerID := ctx.Form(`PayerID`)
 	payment, err := a.Client().ExecuteApprovedPayment(paymentID, playerID)
 	if err != nil {
-		return nil, err
+		return config.EmptyTradeStatus, err
 	}
 	var (
 		paid                   bool
@@ -111,20 +111,23 @@ func (a *Paypal) Finish(ctx echo.Context) (param.StringMap, error) {
 			}
 		}
 	}
-	notify := param.StringMap{}
+	notify := echo.H{}
+	var status string
 	if paid {
-		notify[`paid`] = param.String(`1`)
+		status = config.TradeStatusSuccess
+		notify[`paid`] = true
 	} else {
-		notify[`paid`] = param.String(`0`)
+		status = config.TradeStatusWaitBuyerPay
+		notify[`paid`] = false
 	}
 
-	notify[`trade_no`] = param.String(tradeNo)        // 作为交易流水号
-	notify[`out_trade_no`] = param.String(outOrderNo) // 保存我方订单号
-	notify[`total_amount`] = param.String(totalAmount)
-	notify[`currency`] = param.String(currency)
-	notify[`transaction_fee_value`] = param.String(transactionFeeValue)
-	notify[`transaction_fee_currency`] = param.String(transactionFeeCurrency)
-	return notify, err
+	notify[`trade_no`] = tradeNo        // 作为交易流水号
+	notify[`out_trade_no`] = outOrderNo // 保存我方订单号
+	notify[`total_amount`] = totalAmount
+	notify[`currency`] = currency
+	notify[`transaction_fee_value`] = transactionFeeValue
+	notify[`transaction_fee_currency`] = transactionFeeCurrency
+	return config.NewTradeStatus(status, notify), err
 }
 
 func (a *Paypal) Notify(ctx echo.Context) error {

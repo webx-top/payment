@@ -1,6 +1,7 @@
 package alipay
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/url"
@@ -82,6 +83,7 @@ func (a *Alipay) Pay(cfg *config.Pay) (param.StringMap, error) {
 	result := param.StringMap{}
 	switch cfg.Device {
 	case config.App:
+		payConfig.ProductCode = `QUICK_MSECURITY_PAY`
 		pay := alipay.TradeAppPay{Trade: payConfig}
 		results, err := a.Client().TradeAppPay(pay)
 		if err != nil {
@@ -91,6 +93,18 @@ func (a *Alipay) Pay(cfg *config.Pay) (param.StringMap, error) {
 	case config.Web:
 		pay := alipay.TradePagePay{Trade: payConfig}
 		url, err := a.Client().TradePagePay(pay)
+		if err != nil {
+			return result, err
+		}
+		result["orderString"] = param.String(url.String())
+		result["url"] = result["orderString"]
+	case config.Wap:
+		payConfig.ProductCode = `QUICK_WAP_WAY`
+		pay := alipay.TradeWapPay{
+			Trade:   payConfig,
+			QuitURL: cfg.CancelURL,
+		}
+		url, err := a.Client().TradeWapPay(pay)
 		if err != nil {
 			return result, err
 		}
@@ -127,7 +141,27 @@ func (a *Alipay) Notify(ctx echo.Context) error {
 	} else {
 		err = config.NewOKString(`faild`)
 	}
+	//alipay.AckNotification(rep) // 确认收到通知消息
 	return ctx.String(err.Error())
+}
+
+func (a *Alipay) Query(ctx echo.Context, cfg *config.Query) (config.TradeStatus, error) {
+	pay := alipay.TradeQuery{
+		OutTradeNo:   cfg.OutTradeNo,
+		TradeNo:      cfg.TradeNo,
+		QueryOptions: []string{"TRADE_SETTLE_INFO"},
+	}
+	resp, err := a.Client().TradeQuery(pay)
+	if err != nil {
+		return config.EmptyTradeStatus, err
+	}
+	if !resp.IsSuccess() {
+		if len(resp.Content.SubMsg) > 0 {
+			resp.Content.Msg += `: ` + resp.Content.SubMsg
+		}
+		return config.EmptyTradeStatus, errors.New(resp.Content.Msg)
+	}
+	return config.NewTradeStatus(string(resp.Content.TradeStatus)), err
 }
 
 func (a *Alipay) Refund(cfg *config.Refund) (param.StringMap, error) {
