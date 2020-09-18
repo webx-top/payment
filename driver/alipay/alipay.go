@@ -161,7 +161,12 @@ func (a *Alipay) Query(ctx echo.Context, cfg *config.Query) (config.TradeStatus,
 		}
 		return config.EmptyTradeStatus, errors.New(resp.Content.Msg)
 	}
-	return config.NewTradeStatus(string(resp.Content.TradeStatus)), err
+	return config.NewTradeStatus(string(resp.Content.TradeStatus), echo.H{
+		`trade_no`:     resp.Content.TradeNo,
+		`out_trade_no`: resp.Content.OutTradeNo,
+		`currency`:     resp.Content.PayCurrency,
+		`total_amount`: resp.Content.PayAmount,
+	}), err
 }
 
 func (a *Alipay) Refund(ctx echo.Context, cfg *config.Refund) (param.StringMap, error) {

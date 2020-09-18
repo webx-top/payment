@@ -190,7 +190,12 @@ func (a *Wechat) Query(ctx echo.Context, cfg *config.Query) (config.TradeStatus,
 	case `NOTPAY`, `REVOKED`, `USERPAYING`, `PAYERROR`:
 		tradeStatus = config.TradeStatusWaitBuyerPay
 	}
-	return config.NewTradeStatus(tradeStatus), err
+	return config.NewTradeStatus(tradeStatus, echo.H{
+		`trade_no`:     resp.GetString(`transaction_id`),
+		`out_trade_no`: resp.GetString(`out_trade_no`),
+		`currency`:     resp.GetString(`fee_type`),
+		`total_amount`: payment.CutFloat(float64(resp.GetInt64(`total_fee`))/100, 2),
+	}), err
 }
 
 func (a *Wechat) Refund(ctx echo.Context, cfg *config.Refund) (param.StringMap, error) {
