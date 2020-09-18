@@ -78,7 +78,7 @@ func (a *Paypal) Pay(ctx echo.Context, cfg *config.Pay) (param.StringMap, error)
 	return result, err
 }
 
-func (a *Paypal) Query(ctx echo.Context, cfg *config.Query) (config.TradeStatus, error) {
+func (a *Paypal) PayQuery(ctx echo.Context, cfg *config.Query) (config.TradeStatus, error) {
 	paymentID := ctx.Form(`paymentId`)
 	playerID := ctx.Form(`PayerID`)
 	payment, err := a.Client().ExecuteApprovedPayment(paymentID, playerID)
@@ -130,7 +130,7 @@ func (a *Paypal) Query(ctx echo.Context, cfg *config.Query) (config.TradeStatus,
 	return config.NewTradeStatus(status, notify), err
 }
 
-func (a *Paypal) Notify(ctx echo.Context) error {
+func (a *Paypal) PayNotify(ctx echo.Context) error {
 	event, err := a.Client().GetWebhookEvent(a.account.WebhookID, ctx.Request().StdRequest())
 	if err != nil {
 		return err
@@ -171,7 +171,9 @@ func (a *Paypal) Notify(ctx echo.Context) error {
 			}
 		}
 	default:
-		println(`event.EventType: `, event.EventType, echo.Dump(event, false))
+		if a.account.Debug {
+			println(`event.EventType: `, event.EventType, echo.Dump(event, false))
+		}
 	}
 	return nil
 }
@@ -194,13 +196,45 @@ func (a *Paypal) Refund(ctx echo.Context, cfg *config.Refund) (param.StringMap, 
 	result[`success`] = ``
 	if refund.State == paypal.K_REFUND_STATE_COMPLETED {
 		result[`success`] = `1`
-	} else if refund.State == paypal.K_REFUND_STATE_COMPLETED || refund.State == paypal.K_REFUND_STATE_FAILED {
+	} else if refund.State == paypal.K_REFUND_STATE_CANCELLED || refund.State == paypal.K_REFUND_STATE_FAILED {
 		result[`success`] = `0`
 	}
-	result[`id`] = param.String(refund.Id)
+	result[`refund_no`] = param.String(refund.Id)
 	result[`trade_no`] = param.String(refund.SaleId)
 	result[`out_trade_no`] = param.String(refund.InvoiceNumber)
 	result[`refund_fee`] = param.String(refund.Amount.Total)  // 退款总金额
 	result[`currency`] = param.String(refund.Amount.Currency) // 付款币种
 	return result, err
+}
+
+func (a *Paypal) RefundQuery(ctx echo.Context, cfg *config.Query) (config.TradeStatus, error) {
+	refund, err := a.Client().GetRefundDetails(cfg.RefundNo)
+	if err != nil {
+		return config.EmptyTradeStatus, err
+	}
+	result := echo.H{}
+	var status string
+	switch refund.State {
+	case paypal.K_REFUND_STATE_COMPLETED:
+		result[`success`] = `1`
+		status = config.TradeStatusSuccess
+	case paypal.K_REFUND_STATE_CANCELLED:
+		result[`success`] = `0`
+		status = config.TradeStatusClosed
+	case paypal.K_REFUND_STATE_FAILED:
+		result[`success`] = `0`
+		status = config.TradeStatusException
+	case paypal.K_REFUND_STATE_PENDING:
+		status = config.TradeStatusProcessing
+	}
+	result[`refund_no`] = refund.Id
+	result[`trade_no`] = refund.SaleId
+	result[`out_trade_no`] = refund.InvoiceNumber
+	result[`refund_fee`] = refund.Amount.Total  // 退款总金额
+	result[`currency`] = refund.Amount.Currency // 付款币种
+	return config.NewTradeStatus(status, result), err
+}
+
+func (a *Paypal) RefundNotify(ctx echo.Context) error {
+	return a.PayNotify(ctx)
 }

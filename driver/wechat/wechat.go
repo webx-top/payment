@@ -101,9 +101,9 @@ func (a *Wechat) Pay(ctx echo.Context, cfg *config.Pay) (param.StringMap, error)
 	return param.ToStringMap(a.translateWxpayAppResult(cfg, params)), nil
 }
 
-// Notify 回调处理
+// PayNotify 付款回调处理
 // documentation https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_7&index=8
-func (a *Wechat) Notify(ctx echo.Context) error {
+func (a *Wechat) PayNotify(ctx echo.Context) error {
 	result := param.StringMap{}
 	body := ctx.Request().Body()
 	defer body.Close()
@@ -119,32 +119,14 @@ func (a *Wechat) Notify(ctx echo.Context) error {
 		return config.ErrPaymentFailed
 	}
 	result = param.ToStringMap(params)
-	if v, y := result[`total_fee`]; y {
-		cents, err := strconv.ParseInt(v.String(), 10, 64)
-		if err != nil {
-			log.Error(err)
-		}
-		result[`total_amount`] = param.String(payment.CutFloat(float64(cents)/100, 2))
+	totalFee := result.String(`total_fee`)
+	cents, err := strconv.ParseInt(totalFee, 10, 64)
+	if err != nil {
+		return fmt.Errorf(`total_fee(%v): %v`, totalFee, err)
 	}
-	if v, y := result[`transaction_id`]; y {
-		result[`trade_no`] = v
-	}
-
+	result[`total_amount`] = param.String(payment.CutFloat(float64(cents)/100, 2))
+	result[`trade_no`], _ = result[`transaction_id`]
 	result[`operation`] = `payment`
-	if reqInfo, y := result[`req_info`]; y {
-		result[`operation`] = `refund`
-		b, err := base64.StdEncoding.DecodeString(reqInfo.String())
-		if err != nil {
-			fmt.Println(b, err)
-			return nil
-		}
-		key := strings.ToLower(com.Md5(a.account.AppSecret))
-		crypto := codec.NewAesECBCrypto(`AES-256`)
-		b = crypto.DecodeBytes(b, []byte(key))
-		for k, v := range XmlToMap(string(b)) {
-			result[k] = param.String(v)
-		}
-	}
 	var isSuccess = true
 	var xmlString string
 	noti := wxpay.Notifies{}
@@ -164,7 +146,7 @@ func (a *Wechat) Notify(ctx echo.Context) error {
 	return ctx.XMLBlob([]byte(xmlString))
 }
 
-func (a *Wechat) Query(ctx echo.Context, cfg *config.Query) (config.TradeStatus, error) {
+func (a *Wechat) PayQuery(ctx echo.Context, cfg *config.Query) (config.TradeStatus, error) {
 	params := make(wxpay.Params)
 	if len(cfg.TradeNo) > 0 {
 		params.SetString("transaction_id", cfg.TradeNo)
@@ -212,6 +194,9 @@ func (a *Wechat) Refund(ctx echo.Context, cfg *config.Refund) (param.StringMap, 
 		"total_fee":     MoneyFeeToString(cfg.TotalAmount),
 		"refund_fee":    MoneyFeeToString(cfg.RefundAmount),
 	}
+	if len(cfg.NotifyURL) > 0 {
+		refundConfig[`notify_url`] = cfg.NotifyURL
+	}
 	// documentation https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_4
 	resp, err := a.Client().Refund(refundConfig)
 	if err != nil {
@@ -224,5 +209,132 @@ func (a *Wechat) Refund(ctx echo.Context, cfg *config.Refund) (param.StringMap, 
 	} else if returnCode == wxpay.Success {
 		resp[`success`] = `1`
 	}
+	resp[`refund_no`], _ = resp[`refund_id`]
 	return param.ToStringMap(resp), err
+}
+
+// RefundNotify 退款回调处理
+// documentation https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_16&index=10
+func (a *Wechat) RefundNotify(ctx echo.Context) error {
+	result := param.StringMap{}
+	body := ctx.Request().Body()
+	defer body.Close()
+	b, err := ioutil.ReadAll(body)
+	if err != nil {
+		return err
+	}
+	params := wxpay.XmlToMap(string(b))
+	if !a.Client().ValidSign(params) {
+		return config.ErrSignature
+	}
+	if params["return_code"] != "SUCCESS" {
+		return config.ErrRefundFailed
+	}
+	result = param.ToStringMap(params)
+	totalFee := result.String(`total_fee`)
+	cents, err := strconv.ParseInt(totalFee, 10, 64)
+	if err != nil {
+		return fmt.Errorf(`total_fee(%v): %v`, totalFee, err)
+	}
+	result[`total_amount`] = param.String(payment.CutFloat(float64(cents)/100, 2))
+	result[`trade_no`], _ = result[`transaction_id`]
+	refundFee := result.String(`refund_fee`)
+	refundFeeCents, err := strconv.ParseInt(refundFee, 10, 64)
+	if err != nil {
+		return fmt.Errorf(`refund_fee(%v): %v`, refundFee, err)
+	}
+	result[`refund_fee`] = param.String(payment.CutFloat(float64(refundFeeCents)/100, 2))
+	result[`operation`] = `refund`
+	reqInfo := result.String(`req_info`)
+	b, err = base64.StdEncoding.DecodeString(reqInfo)
+	if err != nil {
+		return fmt.Errorf(`base64decode(%v): %v`, reqInfo, err)
+	}
+	key := strings.ToLower(com.Md5(a.account.AppSecret))
+	crypto := codec.NewAesECBCrypto(`AES-256`)
+	b = crypto.DecodeBytes(b, []byte(key))
+	for k, v := range XmlToMap(string(b)) {
+		result[k] = param.String(v)
+	}
+	var isSuccess = true
+	var xmlString string
+	noti := wxpay.Notifies{}
+	if a.notifyCallback != nil {
+		ctx.Set(`notify`, result)
+		if err := a.notifyCallback(ctx); err != nil {
+			isSuccess = false
+		}
+	}
+	if !isSuccess {
+		xmlString = noti.NotOK("faild")
+	} else {
+		xmlString = noti.OK()
+	}
+
+	return ctx.XMLBlob([]byte(xmlString))
+}
+
+// RefundQuery 退款查询
+func (a *Wechat) RefundQuery(ctx echo.Context, cfg *config.Query) (config.TradeStatus, error) {
+	params := make(wxpay.Params)
+	if len(cfg.OutRefundNo) > 0 {
+		params.SetString("out_refund_no", cfg.OutRefundNo)
+	} else if len(cfg.TradeNo) > 0 {
+		params.SetString("transaction_id", cfg.TradeNo)
+	} else {
+		params.SetString("out_trade_no", cfg.OutTradeNo)
+	}
+	// documentation https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_5
+	resp, err := a.Client().RefundQuery(params)
+	if err != nil {
+		return config.EmptyTradeStatus, err
+	}
+	if resp.GetString(`return_code`) != wxpay.Success {
+		return config.EmptyTradeStatus, errors.New(resp.GetString(`return_msg`))
+	}
+	status := config.TradeStatusProcessing
+	/*
+		SUCCESS—退款成功
+		REFUNDCLOSE—退款关闭。
+		PROCESSING—退款处理中
+		CHANGE—退款异常，退款到银行发现用户的卡作废或者冻结了，导致原路退款银行卡失败，可前往商户平台（pay.weixin.qq.com）-交易中心，手动处理此笔退款。。
+	*/
+	refundCount := resp.GetInt64(`refund_count`)
+	refundList := []echo.H{}
+	if refundCount > 0 {
+		status = config.TradeStatusSuccess
+	}
+	var refundTotalFee int64
+	for i := int64(0); i < refundCount; i++ {
+		refundStatus := resp.GetString(fmt.Sprintf(`refund_status_%d`, i))
+		refundFeeInt := resp.GetInt64(fmt.Sprintf(`refund_fee_%d`, i))
+		outRefundNo := resp.GetInt64(fmt.Sprintf(`out_refund_no_%d`, i))
+		switch refundStatus {
+		case `SUCCESS`:
+			refundStatus = config.TradeStatusSuccess
+		case `REFUNDCLOSE`:
+			refundStatus = config.TradeStatusClosed
+		case `PROCESSING`:
+			refundStatus = config.TradeStatusProcessing
+		case `CHANGE`:
+			refundStatus = config.TradeStatusException
+		}
+		refundList = append(refundList, echo.H{
+			`refundList`:  refundStatus,
+			`refundFee`:   payment.CutFloat(float64(refundFeeInt)/100, 2),
+			`outRefundNo`: outRefundNo,
+		})
+		if status == config.TradeStatusSuccess && refundStatus != config.TradeStatusSuccess {
+			status = config.TradeStatusProcessing
+		}
+		refundTotalFee += refundFeeInt
+	}
+	return config.NewTradeStatus(status, echo.H{
+		`trade_no`:     resp.GetString(`transaction_id`),
+		`out_trade_no`: resp.GetString(`out_trade_no`),
+		`currency`:     resp.GetString(`fee_type`),
+		`refund_fee`:   payment.CutFloat(float64(refundTotalFee)/100, 2),
+		`total_amount`: payment.CutFloat(float64(resp.GetInt64(`total_fee`))/100, 2),
+		`refundList`:   refundList,
+	}), err
 }

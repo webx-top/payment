@@ -6,6 +6,7 @@ var (
 	ErrUnknowDevice  = errors.New("Unknow device type")
 	ErrSignature     = errors.New("Signature error")
 	ErrPaymentFailed = errors.New("Payment failed")
+	ErrRefundFailed  = errors.New("Refund failed")
 	ErrUnsupported   = errors.New("Unsupported")
 )
 

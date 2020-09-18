@@ -119,11 +119,10 @@ func (a *Alipay) Pay(ctx echo.Context, cfg *config.Pay) (param.StringMap, error)
 	return result, err
 }
 
-func (a *Alipay) Notify(ctx echo.Context) error {
+func (a *Alipay) PayNotify(ctx echo.Context) error {
 	formData := url.Values(ctx.Forms())
 	notify, err := a.getAlipayTradeNotificationData(formData)
 	if err != nil {
-		log.Error(err)
 		return err
 	}
 
@@ -135,24 +134,24 @@ func (a *Alipay) Notify(ctx echo.Context) error {
 	if a.notifyCallback != nil {
 		ctx.Set(`notify`, notify)
 		if err := a.notifyCallback(ctx); err != nil {
-			log.Error(err)
 			isSuccess = false
 		}
 	}
-	if isSuccess {
-		err = config.NewOKString(`success`)
-	} else {
-		err = config.NewOKString(`faild`)
-	}
 	//alipay.AckNotification(rep) // 确认收到通知消息
-	return ctx.String(err.Error())
+	if isSuccess {
+		return ctx.String(`success`)
+	}
+	return ctx.String(`faild`)
 }
 
-func (a *Alipay) Query(ctx echo.Context, cfg *config.Query) (config.TradeStatus, error) {
+func (a *Alipay) PayQuery(ctx echo.Context, cfg *config.Query) (config.TradeStatus, error) {
 	pay := alipay.TradeQuery{
-		OutTradeNo:   cfg.OutTradeNo,
-		TradeNo:      cfg.TradeNo,
 		QueryOptions: []string{"TRADE_SETTLE_INFO"},
+	}
+	if len(cfg.TradeNo) > 0 {
+		pay.TradeNo = cfg.TradeNo
+	} else {
+		pay.OutTradeNo = cfg.OutTradeNo
 	}
 	resp, err := a.Client().TradeQuery(pay)
 	if err != nil {
@@ -178,10 +177,13 @@ func (a *Alipay) Refund(ctx echo.Context, cfg *config.Refund) (param.StringMap, 
 		OutTradeNo:   cfg.TradeNo,
 		RefundAmount: MoneyFeeToString(cfg.RefundAmount),
 		RefundReason: cfg.RefundReason,
-		OutRequestNo: fmt.Sprintf("%d%d", time.Now().Local().Unix(), rand.Intn(9999)),
+		OutRequestNo: cfg.OutRefundNo,
 		OperatorId:   ``, // 可选 商户的操作员编号
 		StoreId:      ``, // 可选 商户的门店编号
 		TerminalId:   ``, // 可选 商户的终端编号
+	}
+	if len(refundConfig.OutRequestNo) == 0 {
+		refundConfig.OutRequestNo = fmt.Sprintf("%d%d", time.Now().Local().Unix(), rand.Intn(9999))
 	}
 	resp, err := a.Client().TradeRefund(refundConfig)
 	if err != nil {
@@ -209,4 +211,55 @@ func (a *Alipay) Refund(ctx echo.Context, cfg *config.Refund) (param.StringMap, 
 	result[`sign`] = param.String(resp.Sign)
 
 	return result, err
+}
+
+func (a *Alipay) RefundNotify(ctx echo.Context) error {
+	formData := url.Values(ctx.Forms())
+	notify, err := a.getAlipayTradeNotificationData(formData)
+	if err != nil {
+		return err
+	}
+
+	notify[`operation`] = `refund`
+	var isSuccess = true
+	if a.notifyCallback != nil {
+		ctx.Set(`notify`, notify)
+		if err := a.notifyCallback(ctx); err != nil {
+			log.Error(err)
+			isSuccess = false
+		}
+	}
+	if isSuccess {
+		return ctx.String(`success`)
+	}
+	return ctx.String(`faild`)
+}
+
+func (a *Alipay) RefundQuery(ctx echo.Context, cfg *config.Query) (config.TradeStatus, error) {
+	pay := alipay.TradeFastPayRefundQuery{
+		OutRequestNo: cfg.OutRefundNo,
+		//QueryOptions: []string{"refund_detail_item_list"},
+	}
+	if len(cfg.TradeNo) > 0 {
+		pay.TradeNo = cfg.TradeNo
+	} else {
+		pay.OutTradeNo = cfg.OutTradeNo
+	}
+	resp, err := a.Client().TradeFastPayRefundQuery(pay)
+	if err != nil {
+		return config.EmptyTradeStatus, err
+	}
+	if !resp.IsSuccess() {
+		if len(resp.Content.SubMsg) > 0 {
+			resp.Content.Msg += `: ` + resp.Content.SubMsg
+		}
+		return config.EmptyTradeStatus, errors.New(resp.Content.Msg)
+	}
+	return config.NewTradeStatus(config.TradeStatusSuccess, echo.H{
+		`trade_no`:     resp.Content.TradeNo,
+		`out_trade_no`: resp.Content.OutTradeNo,
+		`currency`:     ``,
+		`total_amount`: resp.Content.TotalAmount,
+		`refund_fee`:   resp.Content.RefundAmount,
+	}), err
 }

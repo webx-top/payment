@@ -37,6 +37,11 @@ func (t TradeStatus) IsFinished() bool {
 	return t.Status == TradeStatusFinished
 }
 
+// IsProcessing 是否退款中
+func (t TradeStatus) IsProcessing() bool {
+	return t.Status == TradeStatusProcessing
+}
+
 const (
 	// TradeStatusWaitBuyerPay 交易创建，等待买家付款
 	TradeStatusWaitBuyerPay = "WAIT_BUYER_PAY"
@@ -46,4 +51,8 @@ const (
 	TradeStatusSuccess = "TRADE_SUCCESS"
 	// TradeStatusFinished 交易结束，不可退款
 	TradeStatusFinished = "TRADE_FINISHED"
+	// TradeStatusException 交易异常(用于退款)
+	TradeStatusException = "TRADE_EXCEPTION"
+	// TradeStatusProcessing 交易中(用于退款)
+	TradeStatusProcessing = "TRADE_PROCESSING"
 )

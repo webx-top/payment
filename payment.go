@@ -13,9 +13,11 @@ type Hook interface {
 	SetNotifyCallback(callback func(echo.Context) error) Hook
 	SetAccount(*config.Account) Hook
 	Pay(echo.Context, *config.Pay) (param.StringMap, error)
-	Query(echo.Context, *config.Query) (config.TradeStatus, error)
-	Notify(echo.Context) error
+	PayQuery(echo.Context, *config.Query) (config.TradeStatus, error)
+	PayNotify(echo.Context) error
 	Refund(echo.Context, *config.Refund) (param.StringMap, error)
+	RefundQuery(echo.Context, *config.Query) (config.TradeStatus, error)
+	RefundNotify(echo.Context) error
 	VerifySign(echo.Context) error
 }
 
