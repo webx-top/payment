@@ -69,7 +69,7 @@ func (a *Wechat) Pay(ctx echo.Context, cfg *config.Pay) (param.StringMap, error)
 	case config.Wap:
 		tradeType = `MWEB`
 	case config.App:
-		tradeType = `App`
+		tradeType = `APP`
 	default:
 		tradeType = `MWEB`
 	}
@@ -90,6 +90,7 @@ func (a *Wechat) Pay(ctx echo.Context, cfg *config.Pay) (param.StringMap, error)
 			wxParams[k] = params.String(k)
 		}
 	}
+	// documentation https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_1
 	params, err := a.Client().UnifiedOrder(wxParams)
 	if err != nil {
 		return nil, err
@@ -97,6 +98,8 @@ func (a *Wechat) Pay(ctx echo.Context, cfg *config.Pay) (param.StringMap, error)
 	return param.ToStringMap(a.translateWxpayAppResult(cfg, params)), nil
 }
 
+// Notify 回调处理
+// documentation https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_7&index=8
 func (a *Wechat) Notify(ctx echo.Context) error {
 	result := param.StringMap{}
 	body := ctx.Request().Body()
@@ -165,6 +168,7 @@ func (a *Wechat) Query(ctx echo.Context, cfg *config.Query) (config.TradeStatus,
 	} else {
 		params.SetString("out_trade_no", cfg.OutTradeNo)
 	}
+	// documentation https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_2
 	resp, err := a.Client().OrderQuery(params)
 	if err != nil {
 		return config.EmptyTradeStatus, err
@@ -205,6 +209,7 @@ func (a *Wechat) Refund(ctx echo.Context, cfg *config.Refund) (param.StringMap, 
 		"total_fee":     MoneyFeeToString(cfg.TotalAmount),
 		"refund_fee":    MoneyFeeToString(cfg.RefundAmount),
 	}
+	// documentation https://pay.weixin.qq.com/wiki/doc/api/jsapi.php?chapter=9_4
 	resp, err := a.Client().Refund(refundConfig)
 	if err != nil {
 		return nil, err
