@@ -84,6 +84,9 @@ func (a *Wechat) Pay(ctx echo.Context, cfg *config.Pay) (param.StringMap, error)
 		"body":         cfg.Subject,
 		"scene_info":   ``,
 	}
+	if !cfg.ExpiredAt.IsZero() {
+		wxParams[`time_expire`] = cfg.ExpiredAt.Format(`20060102150405`)
+	}
 	if cfg.Options != nil {
 		params := cfg.Options.Store(`params`)
 		for k := range params {

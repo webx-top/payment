@@ -1,6 +1,8 @@
 package config
 
 import (
+	"time"
+
 	"github.com/webx-top/echo"
 )
 
@@ -17,6 +19,7 @@ type Pay struct {
 	Currency       Currency  //币种
 	GoodsType      GoodsType //商品类型
 	PassbackParams string    //回传参数
+	ExpiredAt      time.Time //支付过期时间
 	Options        echo.H    //其它选项
 }
 

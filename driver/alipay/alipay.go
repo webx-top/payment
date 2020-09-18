@@ -79,6 +79,9 @@ func (a *Alipay) Pay(ctx echo.Context, cfg *config.Pay) (param.StringMap, error)
 		GoodsType:      cfg.GoodsType.String(),
 		PassbackParams: cfg.PassbackParams,
 	}
+	if !cfg.ExpiredAt.IsZero() {
+		payConfig.TimeExpire = cfg.ExpiredAt.Format(`2006-01-02 15:04:05`)
+	}
 	var err error
 	result := param.StringMap{}
 	switch cfg.Device {
