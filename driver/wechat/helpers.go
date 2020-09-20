@@ -61,6 +61,7 @@ func (a *Wechat) VerifySign(ctx echo.Context) error {
 }
 
 func (a *Wechat) translateWxpayAppResult(tradePay *config.Pay, params wxpay.Params) map[string]string {
+	params[`reason`], _ = params[`return_msg`]
 	if tradePay.Device == config.App {
 		p := make(wxpay.Params)
 		p["appid"] = params["appid"]

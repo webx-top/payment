@@ -127,6 +127,7 @@ func (a *Paypal) PayQuery(ctx echo.Context, cfg *config.Query) (config.TradeStat
 	notify[`currency`] = currency
 	notify[`transaction_fee_value`] = transactionFeeValue
 	notify[`transaction_fee_currency`] = transactionFeeCurrency
+	notify[`reason`] = payment.FailureReason
 	return config.NewTradeStatus(status, notify), err
 }
 
@@ -150,6 +151,14 @@ func (a *Paypal) PayNotify(ctx echo.Context) error {
 		// 交易手续费
 		notify[`transaction_fee_value`] = param.String(sale.TransactionFee.Value)       // 金额
 		notify[`transaction_fee_currency`] = param.String(sale.TransactionFee.Currency) // 币种
+		var reason, sep string
+		for _, v := range sale.PaymentHoldReasons {
+			if len(v.PaymentHoldReason) > 0 {
+				reason += sep + v.PaymentHoldReason
+				sep = `, `
+			}
+		}
+		notify[`reason`] = param.String(reason)
 		if a.notifyCallback != nil {
 			ctx.Set(`notify`, notify)
 			if err := a.notifyCallback(ctx); err != nil {
@@ -164,6 +173,10 @@ func (a *Paypal) PayNotify(ctx echo.Context) error {
 		notify[`out_trade_no`] = param.String(refund.InvoiceNumber)
 		notify[`total_amount`] = param.String(refund.Amount.Total)
 		notify[`currency`] = param.String(refund.Amount.Currency) // 付款币种
+		if len(refund.Description) > 0 {
+			refund.Reason += "; " + refund.Description
+		}
+		notify[`reason`] = param.String(refund.Reason)
 		if a.notifyCallback != nil {
 			ctx.Set(`notify`, notify)
 			if err := a.notifyCallback(ctx); err != nil {
@@ -204,6 +217,7 @@ func (a *Paypal) Refund(ctx echo.Context, cfg *config.Refund) (param.StringMap, 
 	result[`out_trade_no`] = param.String(refund.InvoiceNumber)
 	result[`refund_fee`] = param.String(refund.Amount.Total)  // 退款总金额
 	result[`currency`] = param.String(refund.Amount.Currency) // 付款币种
+	result[`reason`] = param.String(refund.Reason)
 	return result, err
 }
 
@@ -232,6 +246,7 @@ func (a *Paypal) RefundQuery(ctx echo.Context, cfg *config.Query) (config.TradeS
 	result[`out_trade_no`] = refund.InvoiceNumber
 	result[`refund_fee`] = refund.Amount.Total  // 退款总金额
 	result[`currency`] = refund.Amount.Currency // 付款币种
+	result[`reason`] = refund.Reason
 	return config.NewTradeStatus(status, result), err
 }
 

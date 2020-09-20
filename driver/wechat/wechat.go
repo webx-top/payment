@@ -118,6 +118,7 @@ func (a *Wechat) PayNotify(ctx echo.Context) error {
 	if params["return_code"] != "SUCCESS" {
 		return config.ErrPaymentFailed
 	}
+	params[`reason`] = params.GetString(`return_msg`)
 	result = param.ToStringMap(params)
 	totalFee := result.String(`total_fee`)
 	cents, err := strconv.ParseInt(totalFee, 10, 64)
@@ -184,6 +185,7 @@ func (a *Wechat) PayQuery(ctx echo.Context, cfg *config.Query) (config.TradeStat
 		`out_trade_no`: resp.GetString(`out_trade_no`),
 		`currency`:     resp.GetString(`fee_type`),
 		`total_amount`: payment.CutFloat(float64(resp.GetInt64(`total_fee`))/100, 2),
+		`reason`:       resp.GetString(`return_msg`),
 	}), err
 }
 
@@ -210,6 +212,7 @@ func (a *Wechat) Refund(ctx echo.Context, cfg *config.Refund) (param.StringMap, 
 		resp[`success`] = `1`
 	}
 	resp[`refund_no`], _ = resp[`refund_id`]
+	resp[`reason`], _ = resp[`return_msg`]
 	return param.ToStringMap(resp), err
 }
 
@@ -230,6 +233,7 @@ func (a *Wechat) RefundNotify(ctx echo.Context) error {
 	if params["return_code"] != "SUCCESS" {
 		return config.ErrRefundFailed
 	}
+	params[`reason`], _ = params[`return_msg`]
 	result = param.ToStringMap(params)
 	totalFee := result.String(`total_fee`)
 	cents, err := strconv.ParseInt(totalFee, 10, 64)
@@ -336,5 +340,6 @@ func (a *Wechat) RefundQuery(ctx echo.Context, cfg *config.Query) (config.TradeS
 		`refund_fee`:   payment.CutFloat(float64(refundTotalFee)/100, 2),
 		`total_amount`: payment.CutFloat(float64(resp.GetInt64(`total_fee`))/100, 2),
 		`refundList`:   refundList,
+		`reason`:       resp.GetString(`return_msg`),
 	}), err
 }

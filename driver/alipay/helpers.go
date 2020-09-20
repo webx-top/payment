@@ -73,6 +73,7 @@ func (a *Alipay) getAlipayTradeNotificationData(req url.Values) (param.StringMap
 		return nil, err
 	}
 
+	req[`reason`], _ = req[`sub_msg`]
 	result := param.StringMap{}
 	for k := range req {
 		result[k] = param.String(req.Get(k))

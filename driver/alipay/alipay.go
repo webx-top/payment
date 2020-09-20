@@ -168,6 +168,7 @@ func (a *Alipay) PayQuery(ctx echo.Context, cfg *config.Query) (config.TradeStat
 		`out_trade_no`: resp.Content.OutTradeNo,
 		`currency`:     resp.Content.PayCurrency,
 		`total_amount`: resp.Content.PayAmount,
+		`reason`:       resp.Content.SubMsg,
 	}), err
 }
 
@@ -209,7 +210,7 @@ func (a *Alipay) Refund(ctx echo.Context, cfg *config.Refund) (param.StringMap, 
 	result[`store_name`] = param.String(refund.StoreName)        // 交易在支付时候的门店名称
 	//result[`refund_detail_item_list`]= param.String(refund.RefundDetailItemList)
 	result[`sign`] = param.String(resp.Sign)
-
+	result[`reason`] = param.String(refund.SubMsg)
 	return result, err
 }
 
@@ -261,5 +262,6 @@ func (a *Alipay) RefundQuery(ctx echo.Context, cfg *config.Query) (config.TradeS
 		`currency`:     ``,
 		`total_amount`: resp.Content.TotalAmount,
 		`refund_fee`:   resp.Content.RefundAmount,
+		`reason`:       resp.Content.SubMsg,
 	}), err
 }
