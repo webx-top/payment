@@ -175,7 +175,8 @@ func (a *Alipay) PayQuery(ctx echo.Context, cfg *config.Query) (config.TradeStat
 func (a *Alipay) Refund(ctx echo.Context, cfg *config.Refund) (param.StringMap, error) {
 	result := param.StringMap{}
 	refundConfig := alipay.TradeRefund{
-		OutTradeNo:   cfg.TradeNo,
+		OutTradeNo:   cfg.OutTradeNo,
+		TradeNo:      cfg.TradeNo,
 		RefundAmount: MoneyFeeToString(cfg.RefundAmount),
 		RefundReason: cfg.RefundReason,
 		OutRequestNo: cfg.OutRefundNo,
