@@ -83,23 +83,23 @@ type RefundItem struct {
 	RefundNo    string  // 支付网关退款号
 }
 
-func (r *RefundItem) IsSuccess() bool {
-	return r.Status == TradeStatusSuccess
+func IsSuccess(status string) bool {
+	return status == TradeStatusSuccess
 }
 
-func (r *RefundItem) IsWaitPay() bool {
-	return r.Status == TradeStatusWaitBuyerPay
+func IsWaitPay(status string) bool {
+	return status == TradeStatusWaitBuyerPay
 }
 
-func (r *RefundItem) IsClosed() bool {
-	return r.Status == TradeStatusClosed
+func IsClosed(status string) bool {
+	return status == TradeStatusClosed
 }
 
-func (r *RefundItem) IsFinished() bool {
-	return r.Status == TradeStatusFinished
+func IsFinished(status string) bool {
+	return status == TradeStatusFinished
 }
 
 // IsProcessing 是否退款中
-func (r *RefundItem) IsProcessing() bool {
-	return r.Status == TradeStatusProcessing
+func IsProcessing(status string) bool {
+	return status == TradeStatusProcessing
 }
