@@ -68,7 +68,7 @@ func (a *Alipay) Client() *alipay.Client {
 	return a.client
 }
 
-func (a *Alipay) Pay(ctx echo.Context, cfg *config.Pay) (param.StringMap, error) {
+func (a *Alipay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, error) {
 	payConfig := alipay.Trade{
 		NotifyURL:      cfg.NotifyURL,
 		ReturnURL:      cfg.ReturnURL,
@@ -83,7 +83,7 @@ func (a *Alipay) Pay(ctx echo.Context, cfg *config.Pay) (param.StringMap, error)
 		payConfig.TimeExpire = cfg.ExpiredAt.Format(`2006-01-02 15:04:05`)
 	}
 	var err error
-	result := param.StringMap{}
+	result := &config.PayResponse{}
 	switch cfg.Device {
 	case config.App:
 		payConfig.ProductCode = `QUICK_MSECURITY_PAY`
@@ -92,15 +92,14 @@ func (a *Alipay) Pay(ctx echo.Context, cfg *config.Pay) (param.StringMap, error)
 		if err != nil {
 			return result, err
 		}
-		result["orderString"] = param.String(results)
+		result.Raw = results
 	case config.Web:
 		pay := alipay.TradePagePay{Trade: payConfig}
 		url, err := a.Client().TradePagePay(pay)
 		if err != nil {
 			return result, err
 		}
-		result["orderString"] = param.String(url.String())
-		result["url"] = result["orderString"]
+		result.RedirectURL = url.String()
 	case config.Wap:
 		payConfig.ProductCode = `QUICK_WAP_WAY`
 		pay := alipay.TradeWapPay{
@@ -111,8 +110,7 @@ func (a *Alipay) Pay(ctx echo.Context, cfg *config.Pay) (param.StringMap, error)
 		if err != nil {
 			return result, err
 		}
-		result["orderString"] = param.String(url.String())
-		result["url"] = result["orderString"]
+		result.RedirectURL = url.String()
 	default:
 		return nil, config.ErrUnknowDevice
 	}
@@ -125,14 +123,28 @@ func (a *Alipay) PayNotify(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
-
-	notify[`operation`] = `payment`
-	if notify.Float64(`refund_fee`) > 0 {
-		notify[`operation`] = `refund`
-	}
 	var isSuccess = true
 	if a.notifyCallback != nil {
-		ctx.Set(`notify`, notify)
+		status := notify.String(`trade_status`)
+		result := &config.Result{
+			Operation:      config.OperationPayment,
+			Status:         status,
+			TradeNo:        notify.String(`trade_no`),
+			OutTradeNo:     notify.String(`out_trade_no`),
+			PassbackParams: notify.String(`passback_params`),
+			Currency:       ``,
+			TotalAmount:    param.AsFloat64(notify.Float64(`total_amount`)),
+			Reason:         notify.String(`reason`),
+			Raw:            notify,
+		}
+		refundFee := notify.Float64(`refund_fee`)
+		if refundFee > 0 {
+			result.Operation = config.OperationRefund
+			// https://opensupport.alipay.com/support/helpcenter/193/201602484855?ant_source=zsearch#
+			result.OutRefundNo = notify.String(`out_biz_no`)
+			result.RefundFee = refundFee
+		}
+		ctx.Set(`notify`, result)
 		if err := a.notifyCallback(ctx); err != nil {
 			isSuccess = false
 		}
@@ -144,7 +156,7 @@ func (a *Alipay) PayNotify(ctx echo.Context) error {
 	return ctx.String(`faild`)
 }
 
-func (a *Alipay) PayQuery(ctx echo.Context, cfg *config.Query) (config.TradeStatus, error) {
+func (a *Alipay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result, error) {
 	pay := alipay.TradeQuery{
 		QueryOptions: []string{"TRADE_SETTLE_INFO"},
 	}
@@ -155,25 +167,27 @@ func (a *Alipay) PayQuery(ctx echo.Context, cfg *config.Query) (config.TradeStat
 	}
 	resp, err := a.Client().TradeQuery(pay)
 	if err != nil {
-		return config.EmptyTradeStatus, err
+		return nil, err
 	}
 	if !resp.IsSuccess() {
 		if len(resp.Content.SubMsg) > 0 {
 			resp.Content.Msg += `: ` + resp.Content.SubMsg
 		}
-		return config.EmptyTradeStatus, errors.New(resp.Content.Msg)
+		return nil, errors.New(resp.Content.Msg)
 	}
-	return config.NewTradeStatus(string(resp.Content.TradeStatus), echo.H{
-		`trade_no`:     resp.Content.TradeNo,
-		`out_trade_no`: resp.Content.OutTradeNo,
-		`currency`:     resp.Content.PayCurrency,
-		`total_amount`: resp.Content.PayAmount,
-		`reason`:       resp.Content.SubMsg,
-	}), err
+	return &config.Result{
+		Operation:   config.OperationPayment,
+		Status:      config.TradeStatusSuccess,
+		TradeNo:     resp.Content.TradeNo,
+		OutTradeNo:  resp.Content.OutTradeNo,
+		Currency:    resp.Content.PayCurrency,
+		TotalAmount: param.AsFloat64(resp.Content.PayAmount),
+		Reason:      resp.Content.SubMsg,
+		Raw:         resp,
+	}, err
 }
 
-func (a *Alipay) Refund(ctx echo.Context, cfg *config.Refund) (param.StringMap, error) {
-	result := param.StringMap{}
+func (a *Alipay) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, error) {
 	refundConfig := alipay.TradeRefund{
 		OutTradeNo:   cfg.OutTradeNo,
 		TradeNo:      cfg.TradeNo,
@@ -191,28 +205,24 @@ func (a *Alipay) Refund(ctx echo.Context, cfg *config.Refund) (param.StringMap, 
 	if err != nil {
 		return nil, err
 	}
-	refund := resp.Content // 退款信息
-	result[`code`] = param.String(refund.Code)
-	if resp.IsSuccess() {
-		result[`success`] = `1`
-	} else {
-		result[`success`] = `0`
+	if !resp.IsSuccess() {
+		if len(resp.Content.SubMsg) > 0 {
+			resp.Content.Msg += `: ` + resp.Content.SubMsg
+		}
+		return nil, errors.New(resp.Content.Msg)
 	}
-	result[`msg`] = param.String(refund.Msg)
-	result[`sub_code`] = param.String(refund.SubCode)
-	result[`sub_msg`] = param.String(refund.SubMsg)
-	result[`trade_no`] = param.String(refund.TradeNo)
-	result[`out_trade_no`] = param.String(refund.OutTradeNo)
-	result[`buyer_logon_id`] = param.String(refund.BuyerLogonId)
-	result[`buyer_user_id`] = param.String(refund.BuyerUserId)
-	result[`fund_change`] = param.String(refund.FundChange)      // 本次退款是否发生了资金变化
-	result[`refund_fee`] = param.String(refund.RefundFee)        // 退款总金额
-	result[`gmt_refund_pay`] = param.String(refund.GmtRefundPay) // 退款支付时间
-	result[`store_name`] = param.String(refund.StoreName)        // 交易在支付时候的门店名称
-	//result[`refund_detail_item_list`]= param.String(refund.RefundDetailItemList)
-	result[`sign`] = param.String(resp.Sign)
-	result[`reason`] = param.String(refund.SubMsg)
-	return result, err
+	return &config.Result{
+		Operation:   config.OperationRefund,
+		Status:      config.TradeStatusSuccess,
+		TradeNo:     resp.Content.TradeNo,
+		OutTradeNo:  resp.Content.OutTradeNo,
+		Currency:    ``,
+		TotalAmount: 0,
+		Reason:      resp.Content.SubMsg,
+		RefundFee:   param.AsFloat64(resp.Content.RefundFee),
+		OutRefundNo: cfg.OutRefundNo,
+		Raw:         resp,
+	}, err
 }
 
 func (a *Alipay) RefundNotify(ctx echo.Context) error {
@@ -222,10 +232,22 @@ func (a *Alipay) RefundNotify(ctx echo.Context) error {
 		return err
 	}
 
-	notify[`operation`] = `refund`
 	var isSuccess = true
 	if a.notifyCallback != nil {
-		ctx.Set(`notify`, notify)
+		status := notify.String(`trade_status`)
+		result := &config.Result{
+			Operation:   config.OperationRefund,
+			Status:      status,
+			TradeNo:     notify.String(`trade_no`),
+			OutTradeNo:  notify.String(`out_trade_no`),
+			Currency:    ``,
+			TotalAmount: param.AsFloat64(notify.Float64(`total_amount`)),
+			Reason:      notify.String(`reason`),
+			RefundFee:   notify.Float64(`refund_fee`),
+			OutRefundNo: notify.String(`out_biz_no`),
+			Raw:         notify,
+		}
+		ctx.Set(`notify`, result)
 		if err := a.notifyCallback(ctx); err != nil {
 			log.Error(err)
 			isSuccess = false
@@ -237,7 +259,7 @@ func (a *Alipay) RefundNotify(ctx echo.Context) error {
 	return ctx.String(`faild`)
 }
 
-func (a *Alipay) RefundQuery(ctx echo.Context, cfg *config.Query) (config.TradeStatus, error) {
+func (a *Alipay) RefundQuery(ctx echo.Context, cfg *config.Query) (*config.Result, error) {
 	pay := alipay.TradeFastPayRefundQuery{
 		OutRequestNo: cfg.OutRefundNo,
 		//QueryOptions: []string{"refund_detail_item_list"},
@@ -249,20 +271,24 @@ func (a *Alipay) RefundQuery(ctx echo.Context, cfg *config.Query) (config.TradeS
 	}
 	resp, err := a.Client().TradeFastPayRefundQuery(pay)
 	if err != nil {
-		return config.EmptyTradeStatus, err
+		return nil, err
 	}
 	if !resp.IsSuccess() {
 		if len(resp.Content.SubMsg) > 0 {
 			resp.Content.Msg += `: ` + resp.Content.SubMsg
 		}
-		return config.EmptyTradeStatus, errors.New(resp.Content.Msg)
+		return nil, errors.New(resp.Content.Msg)
 	}
-	return config.NewTradeStatus(config.TradeStatusSuccess, echo.H{
-		`trade_no`:     resp.Content.TradeNo,
-		`out_trade_no`: resp.Content.OutTradeNo,
-		`currency`:     ``,
-		`total_amount`: resp.Content.TotalAmount,
-		`refund_fee`:   resp.Content.RefundAmount,
-		`reason`:       resp.Content.SubMsg,
-	}), err
+	return &config.Result{
+		Operation:   config.OperationRefund,
+		Status:      config.TradeStatusSuccess,
+		TradeNo:     resp.Content.TradeNo,
+		OutTradeNo:  resp.Content.OutTradeNo,
+		Currency:    ``,
+		TotalAmount: param.AsFloat64(resp.Content.TotalAmount),
+		Reason:      resp.Content.SubMsg,
+		RefundFee:   param.AsFloat64(resp.Content.RefundAmount),
+		OutRefundNo: resp.Content.OutRequestNo,
+		Raw:         resp,
+	}, err
 }

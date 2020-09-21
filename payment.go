@@ -4,7 +4,6 @@ import (
 	"sync"
 
 	"github.com/webx-top/echo"
-	"github.com/webx-top/echo/param"
 	"github.com/webx-top/payment/config"
 )
 
@@ -12,11 +11,11 @@ import (
 type Hook interface {
 	SetNotifyCallback(callback func(echo.Context) error) Hook
 	SetAccount(*config.Account) Hook
-	Pay(echo.Context, *config.Pay) (param.StringMap, error)
-	PayQuery(echo.Context, *config.Query) (config.TradeStatus, error)
+	Pay(echo.Context, *config.Pay) (*config.PayResponse, error)
+	PayQuery(echo.Context, *config.Query) (*config.Result, error)
 	PayNotify(echo.Context) error
-	Refund(echo.Context, *config.Refund) (param.StringMap, error)
-	RefundQuery(echo.Context, *config.Query) (config.TradeStatus, error)
+	Refund(echo.Context, *config.Refund) (*config.Result, error)
+	RefundQuery(echo.Context, *config.Query) (*config.Result, error)
 	RefundNotify(echo.Context) error
 	VerifySign(echo.Context) error
 }
