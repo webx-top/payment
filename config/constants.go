@@ -15,6 +15,15 @@ func (a Device) String() string {
 	return string(a)
 }
 
+func (a Device) IsSupported() bool {
+	for _, v := range devices {
+		if a == v {
+			return true
+		}
+	}
+	return false
+}
+
 func (a GoodsType) String() string {
 	return strconv.FormatInt(int64(a), 10)
 }
@@ -45,6 +54,14 @@ const (
 	// Wap 在手机端网页上支付
 	Wap Device = `wap`
 )
+
+var (
+	devices = []Device{App, Web, Wap}
+)
+
+func DeviceList() []Device {
+	return devices
+}
 
 const (
 	// VirtualGoods 虚拟商品
