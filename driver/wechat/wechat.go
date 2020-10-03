@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/admpub/log"
 	"github.com/objcoding/wxpay"
 	"github.com/webx-top/codec"
 	"github.com/webx-top/com"
@@ -146,7 +145,6 @@ func (a *Wechat) PayNotify(ctx echo.Context) error {
 		}
 		ctx.Set(`notify`, result)
 		if err := a.notifyCallback(ctx); err != nil {
-			log.Error(err)
 			isSuccess = false
 		}
 	}
