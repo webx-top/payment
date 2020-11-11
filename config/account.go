@@ -24,7 +24,7 @@ type Account struct {
 	PublicKey  string  `json:"publicKey"`  //公钥
 	PrivateKey string  `json:"privateKey"` //私钥
 	CertPath   string  `json:"certPath"`   //证书路径
-	WebhookID  string  `json:"webhookID"`  // paypal使用的webhook id
+	WebhookID  string  `json:"webhookID"`  //Paypal使用的webhook id
 	Options    Options `json:"options"`    //其它选项
 }
 
