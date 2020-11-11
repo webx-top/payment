@@ -41,13 +41,7 @@ func (c *Account) FromStore(v echo.Store) *Account {
 	c.PrivateKey = v.String(`privateKey`)
 	c.CertPath = v.String(`certPath`)
 	c.WebhookID = v.String(`webhookID`)
-	options := v.Store(`options`)
-	c.Options.IconClass = options.String(`iconClass`)
-	c.Options.IconImage = options.String(`iconImage`)
-	c.Options.Title = options.String(`title`)
-	c.Options.Name = options.String(`name`)
-	currencies := options.String(`currencies`)
-	if len(currencies) > 0 {
+	if currencies := v.String(`currencies`); len(currencies) > 0 {
 		tmp := map[string]struct{}{}
 		for _, currency := range strings.Split(currencies, ",") {
 			currency = strings.TrimSpace(currency)
@@ -61,5 +55,10 @@ func (c *Account) FromStore(v echo.Store) *Account {
 			tmp[currency] = struct{}{}
 		}
 	}
+	options := v.Store(`options`)
+	c.Options.IconClass = options.String(`iconClass`)
+	c.Options.IconImage = options.String(`iconImage`)
+	c.Options.Title = options.String(`title`)
+	c.Options.Name = options.String(`name`)
 	return c
 }
