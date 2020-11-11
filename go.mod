@@ -17,6 +17,7 @@ require (
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/objcoding/wxpay v1.0.6
+	github.com/qingwg/payjs v0.0.0-20190928033402-c53dbe16b371
 	github.com/smartwalle/alipay/v3 v3.1.5
 	github.com/smartwalle/paypal v1.0.1
 	github.com/stretchr/testify v1.6.1 // indirect
