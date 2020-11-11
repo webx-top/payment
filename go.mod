@@ -14,7 +14,7 @@ require (
 	github.com/admpub/queueChan v0.0.0-20151001074356-79908f7a499f // indirect
 	github.com/francoispqt/gojay v1.2.13 // indirect
 	github.com/json-iterator/go v1.1.10 // indirect
-	github.com/mattn/go-colorable v0.1.7 // indirect
+	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/objcoding/wxpay v1.0.6
 	github.com/smartwalle/alipay/v3 v3.1.5
@@ -22,8 +22,8 @@ require (
 	github.com/stretchr/testify v1.6.1 // indirect
 	github.com/webx-top/captcha v0.0.0-20161202061115-29e9e7f30aa0 // indirect
 	github.com/webx-top/codec v0.0.0-20200914105801-3782d81a0302
-	github.com/webx-top/com v0.0.2
-	github.com/webx-top/echo v2.3.6+incompatible
+	github.com/webx-top/com v0.0.4
+	github.com/webx-top/echo v2.4.3+incompatible
 	github.com/webx-top/tagfast v0.0.0-20161020041435-9a2065ce3dd2 // indirect
-	github.com/webx-top/validation v0.0.0-20200425052735-86da7bb89191 // indirect
+	github.com/webx-top/validation v0.0.1 // indirect
 )

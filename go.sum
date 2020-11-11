@@ -76,6 +76,8 @@ github.com/lunixbochs/vtclean v1.0.0/go.mod h1:pHhQNgMf3btfWnGBVipUOjRYhoOsdGqdm
 github.com/mailru/easyjson v0.0.0-20190312143242-1de009706dbe/go.mod h1:C1wdFJiN94OJF2b5HbByQZoLdCWB1Yqtg26g4irojpc=
 github.com/mattn/go-colorable v0.1.7 h1:bQGKb3vps/j0E9GfJQ03JyhRuxsvdAanXlT9BTw3mdw=
 github.com/mattn/go-colorable v0.1.7/go.mod h1:u6P/XSegPjTcexA+o6vUJrdnUu04hMope9wVRipJSqc=
+github.com/mattn/go-colorable v0.1.8 h1:c1ghPdyEDarC70ftn0y+A/Ee++9zz8ljHG1b13eJ0s8=
+github.com/mattn/go-colorable v0.1.8/go.mod h1:u6P/XSegPjTcexA+o6vUJrdnUu04hMope9wVRipJSqc=
 github.com/mattn/go-isatty v0.0.12 h1:wuysRhFDzyxgEmMf5xjvJ2M9dZoWAXNNr5LSBS7uHXY=
 github.com/mattn/go-isatty v0.0.12/go.mod h1:cbi8OIDigv2wuxKPP5vlRcQ1OAZbq2CE4Kysco4FUpU=
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
@@ -149,12 +151,18 @@ github.com/webx-top/codec v0.0.0-20200914105801-3782d81a0302 h1:mjHi67g+sITuKnJk
 github.com/webx-top/codec v0.0.0-20200914105801-3782d81a0302/go.mod h1:FL2TNTorudSTop040uNCTONOlIJfl6kElJLxyoHHs/g=
 github.com/webx-top/com v0.0.2 h1:nSfpGQX/sSSVs+xQDZ6k9scXvOTyIyZXrYzJyDjsEg4=
 github.com/webx-top/com v0.0.2/go.mod h1:DDfATzu1w5+vD5XmG3YRTfLjaIqZWi/yeJ7HQEGsM2Q=
+github.com/webx-top/com v0.0.4 h1:PQC4z4xPG2Bs0VmsidudaxedIm0MFS51Mcvxepv/iX0=
+github.com/webx-top/com v0.0.4/go.mod h1:DDfATzu1w5+vD5XmG3YRTfLjaIqZWi/yeJ7HQEGsM2Q=
 github.com/webx-top/echo v2.3.6+incompatible h1:XZIS6Iej21GRpjXMJch9AhCun04S/p5r7IkGCYVk8fA=
 github.com/webx-top/echo v2.3.6+incompatible/go.mod h1:ufVP//GwP1suggBSQW7l8G9XcKxZM+FIfCMElLAQqF8=
+github.com/webx-top/echo v2.4.3+incompatible h1:SfPszysikzeF29rze3rhtJNT9pSad0z3Od6djlQmMKc=
+github.com/webx-top/echo v2.4.3+incompatible/go.mod h1:ufVP//GwP1suggBSQW7l8G9XcKxZM+FIfCMElLAQqF8=
 github.com/webx-top/tagfast v0.0.0-20161020041435-9a2065ce3dd2 h1:lqnGa1BnWT7pN+c9V31bik0lTp5XxyOMRp7ICsZ6K5M=
 github.com/webx-top/tagfast v0.0.0-20161020041435-9a2065ce3dd2/go.mod h1:pMe3sJitHxbxX2EAI/v9HEAXjodP4c+yUVw3rbKcljI=
 github.com/webx-top/validation v0.0.0-20200425052735-86da7bb89191 h1:35lPthxj2aAsj06Kz0PHm4rkeuPN5tzVlq/ZkQkzVG0=
 github.com/webx-top/validation v0.0.0-20200425052735-86da7bb89191/go.mod h1:/AxMVFpDkheXZeolg1e8GQt7tM3pbc2hnORE+cKMOho=
+github.com/webx-top/validation v0.0.1 h1:I7d5iCsEY8CRzvqCJbUnIZ3Yz0MyLvInVoaljUdn21c=
+github.com/webx-top/validation v0.0.1/go.mod h1:/AxMVFpDkheXZeolg1e8GQt7tM3pbc2hnORE+cKMOho=
 go.opencensus.io v0.18.0/go.mod h1:vKdFvxhtzZ9onBp9VKHK8z/sRpBMnKAsufL7wlDrCOA=
 go4.org v0.0.0-20180809161055-417644f6feb5/go.mod h1:MkTOUMDaeVYJUOUsaDXIhWPZYa1yOyC1qaOBpL57BhE=
 golang.org/x/build v0.0.0-20190111050920-041ab4dc3f9d/go.mod h1:OWs+y06UdEOHN4y+MfF/py+xQ/tYqIWW03b70/CG9Rw=
