@@ -11,25 +11,25 @@ func NewAccount() *Account {
 }
 
 type Options struct {
-	IconClass string `json:"iconClass"`
-	IconImage string `json:"iconImage"`
-	Title     string `json:"title"`
-	Name      string `json:"name"`
-	Extra     echo.H `json:"extra"`
+	IconClass string `json:"iconClass,omitempty"`
+	IconImage string `json:"iconImage,omitempty"`
+	Title     string `json:"title,omitempty"`
+	Name      string `json:"name,omitempty"`
+	Extra     echo.H `json:"extra,omitempty"`
 }
 
 // Account 付款平台账号参数
 type Account struct {
 	Debug      bool     `json:"debug"`
-	AppID      string   `json:"appID"`      //即AppID
-	AppSecret  string   `json:"appSecret"`  //即AppKey
-	MerchantID string   `json:"merchantID"` //商家ID
-	PublicKey  string   `json:"publicKey"`  //公钥
-	PrivateKey string   `json:"privateKey"` //私钥
-	CertPath   string   `json:"certPath"`   //证书路径
-	WebhookID  string   `json:"webhookID"`  //Paypal使用的webhook id
-	Currencies []string `json:"currencies"` //支持的币种
-	Options    Options  `json:"options"`    //其它选项
+	AppID      string   `json:"appID,omitempty"`      //即AppID
+	AppSecret  string   `json:"appSecret,omitempty"`  //即AppKey
+	MerchantID string   `json:"merchantID,omitempty"` //商家ID
+	PublicKey  string   `json:"publicKey,omitempty"`  //公钥
+	PrivateKey string   `json:"privateKey,omitempty"` //私钥
+	CertPath   string   `json:"certPath,omitempty"`   //证书路径
+	WebhookID  string   `json:"webhookID,omitempty"`  //Paypal使用的webhook id
+	Currencies []string `json:"currencies,omitempty"` //支持的币种
+	Options    Options  `json:"options,omitempty"`    //其它选项
 }
 
 func (c *Account) FromStore(v echo.Store) *Account {
