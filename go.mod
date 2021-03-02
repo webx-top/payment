@@ -9,7 +9,7 @@ require (
 	github.com/admpub/go-reuseport v0.0.3 // indirect
 	github.com/admpub/humanize v0.0.0-20190501023926-5f826e92c8ca // indirect
 	github.com/admpub/log v0.0.1
-	github.com/admpub/mugglepay v0.0.1
+	github.com/admpub/mugglepay v0.0.2
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/objcoding/wxpay v1.0.6
 	github.com/qingwg/payjs v0.0.0-20190928033402-c53dbe16b371
