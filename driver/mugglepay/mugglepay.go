@@ -1,0 +1,184 @@
+package mugglepay
+
+import (
+	"github.com/admpub/mugglepay"
+	"github.com/admpub/mugglepay/structs"
+	"github.com/webx-top/echo"
+	"github.com/webx-top/payment"
+	"github.com/webx-top/payment/config"
+)
+
+const Name = `mugglepay`
+
+func init() {
+	payment.Register(Name, `麻瓜宝`, New)
+}
+
+func New() payment.Hook {
+	return &Mugglepay{}
+}
+
+type Mugglepay struct {
+	account        *config.Account
+	client         *mugglepay.Mugglepay
+	notifyCallback func(echo.Context) error
+}
+
+func (a *Mugglepay) SetNotifyCallback(callback func(echo.Context) error) payment.Hook {
+	a.notifyCallback = callback
+	return a
+}
+
+func (a *Mugglepay) SetAccount(account *config.Account) payment.Hook {
+	a.account = account
+	return a
+}
+
+func (a *Mugglepay) Client() *mugglepay.Mugglepay {
+	if a.client != nil {
+		return a.client
+	}
+	a.client = mugglepay.New(a.account.AppSecret)
+	return a.client
+}
+
+// Pay documentation: https://github.com/MugglePay/MugglePay/blob/master/API/order/CreateOrder.md
+func (a *Mugglepay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, error) {
+	serverOrder, err := a.Client().CreateOrder(&structs.Order{
+		MerchantOrderID: cfg.OutTradeNo,
+		PriceAmount:     cfg.Amount,
+		PriceCurrency:   cfg.Currency.String(),
+		// PriceCurrency:   "USD",
+		// PayCurrency:     "ALIPAY",
+		// PayCurrency:     "WECHAT",
+		PayCurrency: "",
+		Title:       cfg.Subject,
+		Description: "",
+		CallbackURL: cfg.NotifyURL,
+		SuccessURL:  cfg.ReturnURL,
+		CancelURL:   cfg.CancelURL,
+		Token:       cfg.PassbackParams,
+		UserID:      cfg.Options.Int64(`uid`),
+	})
+	if err != nil {
+		return nil, err
+	}
+	serverOrder.ParseInvoiceAddress()
+	result := &config.PayResponse{
+		TradeNo:        serverOrder.Order.OrderID,
+		RedirectURL:    serverOrder.PaymentURL,
+		QRCodeImageURL: serverOrder.Invoice.Address,
+		QRCodeContent:  ``,
+		Params:         echo.H{},
+		Raw:            serverOrder,
+	}
+	return result, nil
+}
+
+// PayNotify 付款回调处理
+// documentation https://github.com/MugglePay/MugglePay/blob/master/API/order/PaymentCallback.md
+func (a *Mugglepay) PayNotify(ctx echo.Context) error {
+	callback := &structs.Callback{}
+	err := ctx.MustBind(callback)
+	if err != nil {
+		return err
+	}
+	if !a.Client().VerifyOrder(callback) {
+		return ctx.JSON(echo.H{`status`: 400})
+	}
+	//这里处理支付成功回调，一般是修改数据库订单信息等等
+	//msg即为支付成功异步通知过来的内容
+	if a.notifyCallback != nil && callback.Status == `PAID` {
+		result := &config.Result{
+			Operation:      config.OperationPayment,
+			Status:         config.TradeStatusSuccess,
+			TradeNo:        callback.OrderID,
+			OutTradeNo:     callback.MerchantOrderID,
+			Currency:       callback.PriceCurrency,
+			PassbackParams: callback.Token,
+			TotalAmount:    callback.PriceAmount,
+			Reason:         ``,
+			Raw:            callback,
+		}
+		ctx.Set(`notify`, result)
+		a.notifyCallback(ctx)
+	}
+	return ctx.JSON(echo.H{`status`: 200})
+}
+
+// PayQuery documentation: https://github.com/MugglePay/MugglePay/blob/master/API/order/GetOrder.md
+func (a *Mugglepay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result, error) {
+	serverOrder, err := a.Client().GetOrder(cfg.TradeNo)
+	if err != nil {
+		return nil, err
+	}
+	result := &config.Result{
+		Operation:      config.OperationPayment,
+		TradeNo:        serverOrder.Order.OrderID,
+		OutTradeNo:     serverOrder.Order.MerchantOrderID,
+		Currency:       serverOrder.Order.PriceCurrency,
+		PassbackParams: serverOrder.Order.Token,
+		TotalAmount:    serverOrder.Order.PriceAmount,
+		Reason:         ``,
+		Raw:            serverOrder,
+	}
+	MappingStatus(serverOrder.Order.Status, result)
+	return result, err
+}
+
+// Refund documentation https://github.com/MugglePay/MugglePay/blob/master/API/order/Refund.md
+func (a *Mugglepay) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, error) {
+	serverOrder, err := a.Client().Refund(cfg.TradeNo)
+	if err != nil {
+		return nil, err
+	}
+	result := &config.Result{
+		Operation:   config.OperationRefund,
+		TradeNo:     serverOrder.Order.OrderID,
+		OutTradeNo:  serverOrder.Order.MerchantOrderID,
+		Currency:    serverOrder.Order.PayCurrency,
+		TotalAmount: serverOrder.Order.PayAmount,
+		Reason:      ``,
+		RefundFee:   serverOrder.Order.PayAmount,
+		RefundNo:    ``,
+		OutRefundNo: cfg.OutRefundNo,
+		Raw:         serverOrder,
+	}
+	MappingStatus(serverOrder.Order.Status, result)
+	return result, err
+}
+
+// RefundNotify 退款回调处理
+func (a *Mugglepay) RefundNotify(ctx echo.Context) error {
+	callback := &structs.Callback{}
+	err := ctx.MustBind(callback)
+	if err != nil {
+		return err
+	}
+	if !a.Client().VerifyOrder(callback) {
+		return ctx.JSON(echo.H{`status`: 400})
+	}
+	//这里处理支付成功回调，一般是修改数据库订单信息等等
+	//msg即为支付成功异步通知过来的内容
+	if a.notifyCallback != nil && callback.Status == `REFUNDED` {
+		result := &config.Result{
+			Operation:      config.OperationRefund,
+			Status:         config.TradeStatusSuccess,
+			TradeNo:        callback.OrderID,
+			OutTradeNo:     callback.MerchantOrderID,
+			Currency:       callback.PriceCurrency,
+			PassbackParams: callback.Token,
+			TotalAmount:    callback.PriceAmount,
+			Reason:         ``,
+			Raw:            callback,
+		}
+		ctx.Set(`notify`, result)
+		a.notifyCallback(ctx)
+	}
+	return ctx.JSON(echo.H{`status`: 200})
+}
+
+// RefundQuery 退款查询
+func (a *Mugglepay) RefundQuery(ctx echo.Context, cfg *config.Query) (*config.Result, error) {
+	return nil, config.ErrUnsupported
+}

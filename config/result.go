@@ -15,6 +15,7 @@ const (
 )
 
 type PayResponse struct {
+	TradeNo        string // 支付网关交易号
 	RedirectURL    string
 	QRCodeImageURL string
 	QRCodeContent  string
