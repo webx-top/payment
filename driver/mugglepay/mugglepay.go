@@ -56,8 +56,6 @@ func (a *Mugglepay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse,
 		CallbackURL:     cfg.NotifyURL,
 		SuccessURL:      cfg.ReturnURL,
 		CancelURL:       cfg.CancelURL,
-		Token:           cfg.PassbackParams,
-		UserID:          cfg.Options.Int64(`uid`),
 		Mobile:          cfg.Device.IsMobile(),
 	}
 	serverOrder, err := a.Client().CreateOrder(order)
@@ -94,15 +92,16 @@ func (a *Mugglepay) PayNotify(ctx echo.Context) error {
 	//msg即为支付成功异步通知过来的内容
 	if a.notifyCallback != nil && callback.Status == `PAID` {
 		result := &config.Result{
-			Operation:      config.OperationPayment,
-			Status:         config.TradeStatusSuccess,
-			TradeNo:        callback.OrderID,
-			OutTradeNo:     callback.MerchantOrderID,
-			Currency:       callback.PriceCurrency,
-			PassbackParams: callback.Token,
-			TotalAmount:    callback.PriceAmount,
-			Reason:         ``,
-			Raw:            callback,
+			Operation:   config.OperationPayment,
+			Status:      config.TradeStatusSuccess,
+			TradeNo:     callback.OrderID,
+			OutTradeNo:  callback.MerchantOrderID,
+			Currency:    callback.PayCurrency,
+			TotalAmount: callback.PayAmount,
+			PayCurrency: callback.PriceCurrency,
+			PayAmount:   callback.PriceAmount,
+			Reason:      ``,
+			Raw:         callback,
 		}
 		ctx.Set(`notify`, result)
 		a.notifyCallback(ctx)
@@ -117,14 +116,15 @@ func (a *Mugglepay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Resul
 		return nil, err
 	}
 	result := &config.Result{
-		Operation:      config.OperationPayment,
-		TradeNo:        serverOrder.Order.OrderID,
-		OutTradeNo:     serverOrder.Order.MerchantOrderID,
-		Currency:       serverOrder.Order.PriceCurrency,
-		PassbackParams: serverOrder.Order.Token,
-		TotalAmount:    serverOrder.Order.PriceAmount,
-		Reason:         ``,
-		Raw:            serverOrder,
+		Operation:   config.OperationPayment,
+		TradeNo:     serverOrder.Order.OrderID,
+		OutTradeNo:  serverOrder.Order.MerchantOrderID,
+		Currency:    serverOrder.Order.PayCurrency,
+		TotalAmount: serverOrder.Order.PayAmount,
+		PayCurrency: serverOrder.Order.PriceCurrency,
+		PayAmount:   serverOrder.Order.PriceAmount,
+		Reason:      ``,
+		Raw:         serverOrder,
 	}
 	MappingStatus(serverOrder.Order.Status, result)
 	return result, err
@@ -142,6 +142,8 @@ func (a *Mugglepay) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result
 		OutTradeNo:  serverOrder.Order.MerchantOrderID,
 		Currency:    serverOrder.Order.PayCurrency,
 		TotalAmount: serverOrder.Order.PayAmount,
+		PayCurrency: serverOrder.Order.PriceCurrency,
+		PayAmount:   serverOrder.Order.PriceAmount,
 		Reason:      ``,
 		RefundFee:   serverOrder.Order.PayAmount,
 		RefundNo:    ``,
@@ -166,15 +168,16 @@ func (a *Mugglepay) RefundNotify(ctx echo.Context) error {
 	//msg即为支付成功异步通知过来的内容
 	if a.notifyCallback != nil && callback.Status == `REFUNDED` {
 		result := &config.Result{
-			Operation:      config.OperationRefund,
-			Status:         config.TradeStatusSuccess,
-			TradeNo:        callback.OrderID,
-			OutTradeNo:     callback.MerchantOrderID,
-			Currency:       callback.PriceCurrency,
-			PassbackParams: callback.Token,
-			TotalAmount:    callback.PriceAmount,
-			Reason:         ``,
-			Raw:            callback,
+			Operation:   config.OperationRefund,
+			Status:      config.TradeStatusSuccess,
+			TradeNo:     callback.OrderID,
+			OutTradeNo:  callback.MerchantOrderID,
+			Currency:    callback.PayCurrency,
+			TotalAmount: callback.PayAmount,
+			PayCurrency: callback.PriceCurrency,
+			PayAmount:   callback.PriceAmount,
+			Reason:      ``,
+			Raw:         callback,
 		}
 		ctx.Set(`notify`, result)
 		a.notifyCallback(ctx)

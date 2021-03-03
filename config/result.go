@@ -25,16 +25,23 @@ type PayResponse struct {
 
 // Result 付款或退款结果数据
 type Result struct {
-	Operation              string  // 操作类型
-	Status                 string  // 状态
-	TradeNo                string  // 支付网关交易号
-	OutTradeNo             string  // 业务方交易号
-	TotalAmount            float64 // 订单总金额
-	Currency               string  // 币种
+	Operation string // 操作类型
+	Status    string // 状态
+
+	TradeNo    string // 支付网关交易号
+	OutTradeNo string // 业务方交易号
+
+	TotalAmount float64 // 订单总金额
+	Currency    string  // 币种
+
+	PayAmount   float64 // 在网关支付的金额(如果为0，表示和订单的金额一致)
+	PayCurrency string  // 在网关支付的币种(如果为空，表示和订单的币种一样)
+
 	TransactionFeeValue    float64 // 交易手续费金额
 	TransactionFeeCurrency string  // 交易手续费币种
-	Reason                 string  // 失败原因
-	PassbackParams         string  // 原样回传参数
+
+	Reason         string // 失败原因
+	PassbackParams string // 原样回传参数
 
 	// - 退款数据 -
 
