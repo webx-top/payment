@@ -133,11 +133,11 @@ func (a *Mugglepay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Resul
 
 // Refund documentation https://github.com/MugglePay/MugglePay/blob/master/API/order/Refund.md
 func (a *Mugglepay) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, error) {
-	result, err := a.PayQuery(ctx, config.NewQuery().CopyFromRefund(cfg))
+	queryResult, err := a.PayQuery(ctx, config.NewQuery().CopyFromRefund(cfg))
 	if err != nil {
 		return nil, err
 	}
-	if result.PayAmount != cfg.RefundAmount {
+	if queryResult.PayAmount != cfg.RefundAmount {
 		return nil, fmt.Errorf("MugglePay只支持全额退款")
 	}
 	serverRefund, err := a.Client().Refund(cfg.TradeNo)
@@ -148,11 +148,11 @@ func (a *Mugglepay) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result
 		return nil, errors.New(serverRefund.ErrorCode + `: ` + serverRefund.Error)
 	}
 	result := &config.Result{
-		Operation:  config.OperationRefund,
-		TradeNo:    serverRefund.Order.OrderID,
-		OutTradeNo: serverRefund.Order.MerchantOrderID,
-		//Currency:    serverOrder.Order.PayCurrency,
-		//TotalAmount: serverOrder.Order.PayAmount,
+		Operation:   config.OperationRefund,
+		TradeNo:     serverRefund.Order.OrderID,
+		OutTradeNo:  serverRefund.Order.MerchantOrderID,
+		Currency:    queryResult.Currency,
+		TotalAmount: queryResult.TotalAmount,
 		PayCurrency: serverRefund.Order.PriceCurrency,
 		PayAmount:   serverRefund.Order.PriceAmount,
 		Reason:      ``,
