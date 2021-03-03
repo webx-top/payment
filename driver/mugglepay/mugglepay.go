@@ -132,25 +132,28 @@ func (a *Mugglepay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Resul
 
 // Refund documentation https://github.com/MugglePay/MugglePay/blob/master/API/order/Refund.md
 func (a *Mugglepay) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, error) {
-	serverOrder, err := a.Client().Refund(cfg.TradeNo)
+	serverRefund, err := a.Client().Refund(cfg.TradeNo)
 	if err != nil {
 		return nil, err
 	}
+	if len(serverRefund.ErrorCode) > 0 {
+		return nil, errors.New(serverRefund.ErrorCode + `: ` + serverRefund.Error)
+	}
 	result := &config.Result{
 		Operation:  config.OperationRefund,
-		TradeNo:    serverOrder.Order.OrderID,
-		OutTradeNo: serverOrder.Order.MerchantOrderID,
+		TradeNo:    serverRefund.Order.OrderID,
+		OutTradeNo: serverRefund.Order.MerchantOrderID,
 		//Currency:    serverOrder.Order.PayCurrency,
 		//TotalAmount: serverOrder.Order.PayAmount,
-		PayCurrency: serverOrder.Order.PriceCurrency,
-		PayAmount:   serverOrder.Order.PriceAmount,
+		PayCurrency: serverRefund.Order.PriceCurrency,
+		PayAmount:   serverRefund.Order.PriceAmount,
 		Reason:      ``,
-		RefundFee:   serverOrder.Order.PriceAmount,
+		RefundFee:   serverRefund.Order.PriceAmount,
 		RefundNo:    ``,
 		OutRefundNo: cfg.OutRefundNo,
-		Raw:         serverOrder,
+		Raw:         serverRefund,
 	}
-	MappingStatus(serverOrder.Order.Status, result)
+	MappingStatus(serverRefund.Order.Status, result)
 	return result, err
 }
 
