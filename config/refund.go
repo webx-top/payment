@@ -7,6 +7,7 @@ type Refund struct {
 	Platform     string   //付款平台
 	TradeNo      string   //付款平台的交易号
 	OutTradeNo   string   //业务方的交易号（我们的订单号）
+	RefundNo     string   //付款平台退单号
 	OutRefundNo  string   //业务方退单号
 	TotalAmount  float64  //订单总金额（alipay可不传）
 	RefundAmount float64  //退款金额

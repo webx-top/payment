@@ -2,6 +2,7 @@ package mugglepay
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/admpub/mugglepay"
 	"github.com/admpub/mugglepay/structs"
@@ -132,6 +133,13 @@ func (a *Mugglepay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Resul
 
 // Refund documentation https://github.com/MugglePay/MugglePay/blob/master/API/order/Refund.md
 func (a *Mugglepay) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, error) {
+	result, err := a.PayQuery(ctx, config.NewQuery().CopyFromRefund(cfg))
+	if err != nil {
+		return nil, err
+	}
+	if result.PayAmount != cfg.RefundAmount {
+		return nil, fmt.Errorf("MugglePay只支持全额退款")
+	}
 	serverRefund, err := a.Client().Refund(cfg.TradeNo)
 	if err != nil {
 		return nil, err
