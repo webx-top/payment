@@ -137,15 +137,15 @@ func (a *Mugglepay) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result
 		return nil, err
 	}
 	result := &config.Result{
-		Operation:   config.OperationRefund,
-		TradeNo:     serverOrder.Order.OrderID,
-		OutTradeNo:  serverOrder.Order.MerchantOrderID,
-		Currency:    serverOrder.Order.PayCurrency,
-		TotalAmount: serverOrder.Order.PayAmount,
+		Operation:  config.OperationRefund,
+		TradeNo:    serverOrder.Order.OrderID,
+		OutTradeNo: serverOrder.Order.MerchantOrderID,
+		//Currency:    serverOrder.Order.PayCurrency,
+		//TotalAmount: serverOrder.Order.PayAmount,
 		PayCurrency: serverOrder.Order.PriceCurrency,
 		PayAmount:   serverOrder.Order.PriceAmount,
 		Reason:      ``,
-		RefundFee:   serverOrder.Order.PayAmount,
+		RefundFee:   serverOrder.Order.PriceAmount,
 		RefundNo:    ``,
 		OutRefundNo: cfg.OutRefundNo,
 		Raw:         serverOrder,
