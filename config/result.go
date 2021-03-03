@@ -61,7 +61,7 @@ func (r *Result) GetPayAmount() float64 {
 	return r.TotalAmount
 }
 
-func (r *Result) GetPayCurrent() string {
+func (r *Result) GetPayCurrency() string {
 	if len(r.PayCurrency) > 0 {
 		return r.PayCurrency
 	}
