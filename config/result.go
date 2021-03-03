@@ -54,6 +54,20 @@ type Result struct {
 	Raw interface{}
 }
 
+func (r *Result) GetPayAmount() float64 {
+	if r.PayAmount > 0 {
+		return r.PayAmount
+	}
+	return r.TotalAmount
+}
+
+func (r *Result) GetPayCurrent() string {
+	if len(r.PayCurrency) > 0 {
+		return r.PayCurrency
+	}
+	return r.Currency
+}
+
 // AddRefundItem 添加退款项数据
 func (r *Result) AddRefundItem(items ...*RefundItem) *Result {
 	r.RefundItems = append(r.RefundItems, items...)
