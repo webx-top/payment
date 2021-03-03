@@ -1,6 +1,8 @@
 package mugglepay
 
 import (
+	"errors"
+
 	"github.com/admpub/mugglepay"
 	"github.com/admpub/mugglepay/structs"
 	"github.com/webx-top/echo"
@@ -61,6 +63,9 @@ func (a *Mugglepay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse,
 	serverOrder, err := a.Client().CreateOrder(order)
 	if err != nil {
 		return nil, err
+	}
+	if serverOrder.Status != 200 && len(serverOrder.PaymentURL) == 0 {
+		return nil, errors.New(serverOrder.ErrorCode + `: ` + serverOrder.Error)
 	}
 	serverOrder.ParseInvoiceAddress()
 	result := &config.PayResponse{
