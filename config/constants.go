@@ -15,8 +15,19 @@ func (a Device) String() string {
 	return string(a)
 }
 
+// IsSupported 是否是支持的设备
 func (a Device) IsSupported() bool {
 	for _, v := range devices {
+		if a == v {
+			return true
+		}
+	}
+	return false
+}
+
+// IsMobile 是否是移动设备
+func (a Device) IsMobile() bool {
+	for _, v := range mobileDevices {
 		if a == v {
 			return true
 		}
@@ -56,7 +67,8 @@ const (
 )
 
 var (
-	devices = []Device{App, Web, Wap}
+	devices       = []Device{App, Web, Wap}
+	mobileDevices = []Device{App, Wap}
 )
 
 func DeviceList() []Device {

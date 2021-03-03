@@ -44,22 +44,21 @@ func (a *Mugglepay) Client() *mugglepay.Mugglepay {
 
 // Pay documentation: https://github.com/MugglePay/MugglePay/blob/master/API/order/CreateOrder.md
 func (a *Mugglepay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, error) {
-	serverOrder, err := a.Client().CreateOrder(&structs.Order{
+	order := &structs.Order{
 		MerchantOrderID: cfg.OutTradeNo,
 		PriceAmount:     cfg.Amount,
-		PriceCurrency:   cfg.Currency.String(),
-		// PriceCurrency:   "USD",
-		// PayCurrency:     "ALIPAY",
-		// PayCurrency:     "WECHAT",
-		PayCurrency: "",
-		Title:       cfg.Subject,
-		Description: "",
-		CallbackURL: cfg.NotifyURL,
-		SuccessURL:  cfg.ReturnURL,
-		CancelURL:   cfg.CancelURL,
-		Token:       cfg.PassbackParams,
-		UserID:      cfg.Options.Int64(`uid`),
-	})
+		PriceCurrency:   cfg.Currency.String(), // "USD",
+		PayCurrency:     "",                    // ALIPAY | WECHAT
+		Title:           cfg.Subject,
+		Description:     "",
+		CallbackURL:     cfg.NotifyURL,
+		SuccessURL:      cfg.ReturnURL,
+		CancelURL:       cfg.CancelURL,
+		Token:           cfg.PassbackParams,
+		UserID:          cfg.Options.Int64(`uid`),
+		Mobile:          cfg.Device.IsMobile(),
+	}
+	serverOrder, err := a.Client().CreateOrder(order)
 	if err != nil {
 		return nil, err
 	}
