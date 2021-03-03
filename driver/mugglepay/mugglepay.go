@@ -66,8 +66,8 @@ func (a *Mugglepay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse,
 	result := &config.PayResponse{
 		TradeNo:        serverOrder.Order.OrderID,
 		RedirectURL:    serverOrder.PaymentURL,
-		QRCodeImageURL: serverOrder.Invoice.Address,
-		QRCodeContent:  ``,
+		QRCodeImageURL: ``,
+		QRCodeContent:  serverOrder.Invoice.Qrcode,
 		Params:         echo.H{},
 		Raw:            serverOrder,
 	}
