@@ -7,3 +7,8 @@
 3. 支持PayPal支付
 4. 支持PayJS支付
 5. 支持MugglePay加密货币支付
+
+## 打赏
+<a href="https://donate.cafe/hanks">
+  <img style="width:150px" src="https://newbie.zeromesh.net/donate.7.6.svg" />
+</a>
