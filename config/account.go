@@ -55,7 +55,7 @@ func (c *Account) FromStore(v echo.Store) *Account {
 			tmp[currency] = struct{}{}
 		}
 	}
-	options := v.Store(`options`)
+	options := v.GetStore(`options`)
 	c.Options.IconClass = options.String(`iconClass`)
 	c.Options.IconImage = options.String(`iconImage`)
 	c.Options.Title = options.String(`title`)
