@@ -59,6 +59,11 @@ func (a *Mugglepay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse,
 		CancelURL:       cfg.CancelURL,
 		Mobile:          cfg.Device.IsMobile(),
 	}
+	if cfg.Options != nil {
+		order.PayCurrency = cfg.Options.String(`payCurrency`)
+		order.Description = cfg.Options.String(`description`)
+		order.Fast = cfg.Options.Bool(`fast`)
+	}
 	serverOrder, err := a.Client().CreateOrder(order)
 	if err != nil {
 		return nil, err
