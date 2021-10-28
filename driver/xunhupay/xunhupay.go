@@ -16,8 +16,9 @@ import (
 	"github.com/webx-top/payment/config"
 )
 
-const (
-	Name           = `xunhupay`
+const Name = `xunhupay`
+
+var (
 	APIPay         = `https://api.xunhupay.com/payment`
 	APIWxNativePay = `https://api.xunhupay.com/payment/do.html`
 	APIQuery       = `https://api.xunhupay.com/payment/query.html`

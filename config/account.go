@@ -41,9 +41,8 @@ func NewSubtype(label string, options ...*SubtypeOption) *Subtype {
 }
 
 type Subtype struct {
-	Disabled bool             `json:"disabled"`
-	Label    string           `json:"label"`
-	Options  []*SubtypeOption `json:"options"`
+	Label   string           `json:"label"`
+	Options []*SubtypeOption `json:"options"`
 }
 
 func (s *Subtype) Add(o ...*SubtypeOption) *Subtype {
