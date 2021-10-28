@@ -53,6 +53,24 @@ func (s *Subtype) Add(o ...*SubtypeOption) *Subtype {
 	return s
 }
 
+func (s *Subtype) Exists(value string) bool {
+	for _, o := range s.Options {
+		if o.Value == value {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Subtype) GetOption(value string) *SubtypeOption {
+	for _, o := range s.Options {
+		if o.Value == value {
+			return o
+		}
+	}
+	return nil
+}
+
 // Account 付款平台账号参数
 type Account struct {
 	Debug      bool     `json:"debug"`
