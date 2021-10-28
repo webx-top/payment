@@ -1,8 +1,11 @@
 package config
 
 import (
+	"encoding/json"
 	"strings"
 
+	"github.com/admpub/log"
+	"github.com/webx-top/com"
 	"github.com/webx-top/echo"
 )
 
@@ -22,18 +25,32 @@ type Options struct {
 	Extra     echo.H `json:"extra,omitempty"`
 }
 
+type SubtypeOption struct {
+	Value   string `json:"value,omitempty"`
+	Text    string `json:"text,omitempty"`
+	Image   string `json:"image,omitempty"`
+	Checked bool   `json:"label,omitempty"`
+}
+
+type Subtype struct {
+	Name    string           `json:"name,omitempty"`
+	Label   string           `json:"label,omitempty"`
+	Options []*SubtypeOption `json:"options,omitempty"`
+}
+
 // Account 付款平台账号参数
 type Account struct {
-	Debug      bool     `json:"debug"`
-	AppID      string   `json:"appID,omitempty"`      //即AppID
-	AppSecret  string   `json:"appSecret,omitempty"`  //即AppKey
-	MerchantID string   `json:"merchantID,omitempty"` //商家ID
-	PublicKey  string   `json:"publicKey,omitempty"`  //公钥
-	PrivateKey string   `json:"privateKey,omitempty"` //私钥
-	CertPath   string   `json:"certPath,omitempty"`   //证书路径
-	WebhookID  string   `json:"webhookID,omitempty"`  //Paypal使用的webhook id
-	Currencies []string `json:"currencies,omitempty"` //支持的币种
-	Options    Options  `json:"options,omitempty"`    //其它选项
+	Debug      bool       `json:"debug"`
+	AppID      string     `json:"appID,omitempty"`      //即AppID
+	AppSecret  string     `json:"appSecret,omitempty"`  //即AppKey
+	MerchantID string     `json:"merchantID,omitempty"` //商家ID
+	PublicKey  string     `json:"publicKey,omitempty"`  //公钥
+	PrivateKey string     `json:"privateKey,omitempty"` //私钥
+	CertPath   string     `json:"certPath,omitempty"`   //证书路径
+	WebhookID  string     `json:"webhookID,omitempty"`  //Paypal使用的webhook id
+	Currencies []string   `json:"currencies,omitempty"` //支持的币种
+	Subtypes   []*Subtype `json:"subtype,omitempty"`    //子类型（用于选择第四方平台内支持的支付方式）
+	Options    Options    `json:"options,omitempty"`    //其它选项
 }
 
 func (c *Account) FromStore(v echo.Store) *Account {
@@ -57,6 +74,35 @@ func (c *Account) FromStore(v echo.Store) *Account {
 			}
 			c.Currencies = append(c.Currencies, currency)
 			tmp[currency] = struct{}{}
+		}
+	}
+	subtypes := v.Get(`subtypes`)
+	switch rv := subtypes.(type) {
+	case []*Subtype:
+		c.Subtypes = rv
+	case []interface{}:
+		c.Subtypes = make([]*Subtype, len(rv))
+		if len(rv) > 0 {
+			if _, ok := rv[0].(*Subtype); !ok {
+				b, err := json.Marshal(rv)
+				if err == nil {
+					err = json.Unmarshal(b, &c.Subtypes)
+					if err != nil {
+						log.Error(err)
+					}
+				}
+			} else {
+				for _k, _v := range rv {
+					c.Subtypes[_k] = _v.(*Subtype)
+				}
+			}
+		}
+	case string:
+		if len(rv) > 0 {
+			err := json.Unmarshal(com.Str2bytes(rv), &c.Subtypes)
+			if err != nil {
+				log.Error(err)
+			}
 		}
 	}
 	options := v.GetStore(`options`)
