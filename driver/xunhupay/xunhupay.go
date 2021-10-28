@@ -219,7 +219,7 @@ func (a *XunHuPay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result
 		return nil, err
 	}
 	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("%d %s:\n%s", resp.StatusCode(), resp.Status(), resp.String())
+		return nil, fmt.Errorf("%d %s:\n%s", resp.StatusCode(), resp.Status(), com.StripTags(resp.String()))
 	}
 	errcode := recv.Int(`errcode`)
 	if errcode != 0 {
