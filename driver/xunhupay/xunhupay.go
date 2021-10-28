@@ -128,7 +128,7 @@ func (a *XunHuPay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, 
 		return nil, err
 	}
 	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("%s:\n%s", resp.Status(), resp.String())
+		return nil, fmt.Errorf("%s: %s", resp.Status(), resp.String())
 	}
 	errcode := recv.Int(`errcode`)
 	if errcode != 0 {
