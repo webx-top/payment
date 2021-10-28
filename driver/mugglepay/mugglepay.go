@@ -3,6 +3,7 @@ package mugglepay
 import (
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/admpub/mugglepay"
 	"github.com/admpub/mugglepay/structs"
@@ -69,7 +70,7 @@ func (a *Mugglepay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse,
 		return nil, err
 	}
 	serverOrder.Parse()
-	if serverOrder.Status != 200 && len(serverOrder.PaymentURL) == 0 {
+	if serverOrder.Status != http.StatusOK && len(serverOrder.PaymentURL) == 0 {
 		return nil, errors.New(serverOrder.ErrorCode + `: ` + serverOrder.Error)
 	}
 	result := &config.PayResponse{

@@ -2,6 +2,7 @@ package xunhupay
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -125,8 +126,8 @@ func (a *XunHuPay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, 
 	if err != nil {
 		return nil, err
 	}
-	if resp.StatusCode() != 200 {
-		return nil, fmt.Errorf("%d %s:\n%s", resp.StatusCode(), resp.Status(), resp.String())
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("%s:\n%s", resp.Status(), resp.String())
 	}
 	errcode := recv.Int(`errcode`)
 	if errcode != 0 {
@@ -216,7 +217,7 @@ func (a *XunHuPay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result
 	if err != nil {
 		return nil, err
 	}
-	if resp.StatusCode() != 200 {
+	if resp.StatusCode() != http.StatusOK {
 		return nil, fmt.Errorf("%d %s:\n%s", resp.StatusCode(), resp.Status(), resp.String())
 	}
 	errcode := recv.Int(`errcode`)
