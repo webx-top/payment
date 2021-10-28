@@ -69,9 +69,14 @@ func (a *PayJS) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, err
 	a.Client().Context.NotifyUrl = cfg.NotifyURL
 	switch tradeType {
 	case `JSAPI`:
+		openID := cfg.Options.String(`openid`)
+		if len(openID) == 0 && a.account.Options.Extra != nil {
+			payConfig := a.account.Options.Extra.GetStore(`payConfig`)
+			openID = payConfig.String(`openId`)
+		}
 		// documentation https://help.payjs.cn/api-lie-biao/jsapiyuan-sheng-zhi-fu.html
 		jsapi := a.Client().GetJs()
-		resp, err := jsapi.Create(param.AsInt64(MoneyFeeToString(cfg.Amount)), cfg.Subject, cfg.OutTradeNo, cfg.PassbackParams, cfg.Options.String(`openid`))
+		resp, err := jsapi.Create(param.AsInt64(MoneyFeeToString(cfg.Amount)), cfg.Subject, cfg.OutTradeNo, cfg.PassbackParams, openID)
 		if err != nil {
 			return nil, err
 		}

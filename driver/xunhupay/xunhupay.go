@@ -83,6 +83,12 @@ func (a *XunHuPay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, 
 	if len(cfg.PassbackParams) > 0 {
 		data.Set(`attach`, cfg.PassbackParams)
 	}
+	if a.account.Options.Extra != nil {
+		payConfig := a.account.Options.Extra.GetStore(`payConfig`)
+		for k, v := range payConfig {
+			data.Set(k, param.AsString(v))
+		}
+	}
 	if cfg.Options != nil {
 		payment := cfg.Options.String(`payment`)
 		if len(payment) > 0 {
