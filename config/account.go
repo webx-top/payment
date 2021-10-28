@@ -55,17 +55,17 @@ func (s *Subtype) Add(o ...*SubtypeOption) *Subtype {
 
 // Account 付款平台账号参数
 type Account struct {
-	Debug      bool       `json:"debug"`
-	AppID      string     `json:"appID,omitempty"`      //即AppID
-	AppSecret  string     `json:"appSecret,omitempty"`  //即AppKey
-	MerchantID string     `json:"merchantID,omitempty"` //商家ID
-	PublicKey  string     `json:"publicKey,omitempty"`  //公钥
-	PrivateKey string     `json:"privateKey,omitempty"` //私钥
-	CertPath   string     `json:"certPath,omitempty"`   //证书路径
-	WebhookID  string     `json:"webhookID,omitempty"`  //Paypal使用的webhook id
-	Currencies []string   `json:"currencies,omitempty"` //支持的币种
-	Subtypes   []*Subtype `json:"subtypes,omitempty"`   //子类型（用于选择第四方平台内支持的支付方式）
-	Options    Options    `json:"options,omitempty"`    //其它选项
+	Debug      bool     `json:"debug"`
+	AppID      string   `json:"appID,omitempty"`      //即AppID
+	AppSecret  string   `json:"appSecret,omitempty"`  //即AppKey
+	MerchantID string   `json:"merchantID,omitempty"` //商家ID
+	PublicKey  string   `json:"publicKey,omitempty"`  //公钥
+	PrivateKey string   `json:"privateKey,omitempty"` //私钥
+	CertPath   string   `json:"certPath,omitempty"`   //证书路径
+	WebhookID  string   `json:"webhookID,omitempty"`  //Paypal使用的webhook id
+	Currencies []string `json:"currencies,omitempty"` //支持的币种
+	Subtype    *Subtype `json:"subtype,omitempty"`    //子类型（用于选择第四方平台内支持的支付方式）
+	Options    Options  `json:"options,omitempty"`    //其它选项
 }
 
 var accountSetDefaults = map[string]func(a *Account){}
@@ -83,11 +83,6 @@ func (c *Account) SetDefaults(platform string) *Account {
 	if ok {
 		fn(c)
 	}
-	return c
-}
-
-func (c *Account) AddSubtype(subtypes ...*Subtype) *Account {
-	c.Subtypes = append(c.Subtypes, subtypes...)
 	return c
 }
 
@@ -114,30 +109,18 @@ func (c *Account) FromStore(v echo.Store) *Account {
 			tmp[currency] = struct{}{}
 		}
 	}
-	subtypes := v.Get(`subtypes`)
-	switch rv := subtypes.(type) {
-	case []*Subtype:
-		c.Subtypes = rv
-	case []interface{}:
-		c.Subtypes = make([]*Subtype, len(rv))
-		if len(rv) > 0 {
-			if _, ok := rv[0].(*Subtype); !ok {
-				b, err := json.Marshal(rv)
-				if err == nil {
-					err = json.Unmarshal(b, &c.Subtypes)
-					if err != nil {
-						log.Error(err)
-					}
-				}
-			} else {
-				for _k, _v := range rv {
-					c.Subtypes[_k] = _v.(*Subtype)
-				}
-			}
-		}
+	subtype := v.Get(`subtype`)
+	switch rv := subtype.(type) {
+	case *Subtype:
+		c.Subtype = rv
+	case Subtype:
+		c.Subtype = &rv
 	case string:
 		if len(rv) > 0 {
-			err := json.Unmarshal(com.Str2bytes(rv), &c.Subtypes)
+			if c.Subtype == nil {
+				c.Subtype = &Subtype{}
+			}
+			err := json.Unmarshal(com.Str2bytes(rv), &c.Subtype)
 			if err != nil {
 				log.Error(err)
 			}

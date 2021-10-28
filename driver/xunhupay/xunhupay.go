@@ -29,16 +29,20 @@ func init() {
 var client = resty.NewWithClient(com.HTTPClientWithTimeout(30 * time.Second))
 
 func SetDefaults(a *config.Account) {
-	if len(a.Subtypes) == 0 {
-		a.AddSubtype(config.NewSubtype(
+	if a.Subtype == nil {
+		a.Subtype = config.NewSubtype(
 			`payment`, `支付类型`,
+		)
+	}
+	if len(a.Subtype.Options) == 0 {
+		a.Subtype.Add(
 			&config.SubtypeOption{
 				Value: `alipay`, Text: `支付宝付款`, Checked: true,
 			},
 			&config.SubtypeOption{
 				Value: `wechat`, Text: `微信付款`,
 			},
-		))
+		)
 	}
 }
 
