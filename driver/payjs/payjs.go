@@ -107,6 +107,7 @@ func (a *PayJS) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, err
 func (a *PayJS) PayNotify(ctx echo.Context) error {
 	payNotify := a.Client().GetNotify(ctx.Request().StdRequest(), ctx.Response().StdResponseWriter())
 
+	var notifyCallbackErr error
 	//设置接收消息的处理方法
 	payNotify.SetMessageHandler(func(msg notify.Message) {
 		//这里处理支付成功回调，一般是修改数据库订单信息等等
@@ -124,7 +125,7 @@ func (a *PayJS) PayNotify(ctx echo.Context) error {
 				Raw:            msg,
 			}
 			ctx.Set(`notify`, result)
-			a.notifyCallback(ctx)
+			notifyCallbackErr = a.notifyCallback(ctx)
 		}
 	})
 
@@ -132,6 +133,9 @@ func (a *PayJS) PayNotify(ctx echo.Context) error {
 	err := payNotify.Serve()
 	if err != nil {
 		return err
+	}
+	if notifyCallbackErr != nil {
+		return notifyCallbackErr
 	}
 
 	//发送回复的消息
