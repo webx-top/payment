@@ -40,6 +40,12 @@ func Register(platform string, name string, hook func() Hook, setDefaults ...fun
 	}
 }
 
+func Unregister(platform string) {
+	delete(payments, platform)
+	delete(platforms, platform)
+	config.UnregisterAccountSetDefaults(platform)
+}
+
 func Get(platform string) (hook func() Hook) {
 	hook, _ = payments[platform]
 	return hook
