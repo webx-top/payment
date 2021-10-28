@@ -49,7 +49,7 @@ type Account struct {
 	CertPath   string     `json:"certPath,omitempty"`   //证书路径
 	WebhookID  string     `json:"webhookID,omitempty"`  //Paypal使用的webhook id
 	Currencies []string   `json:"currencies,omitempty"` //支持的币种
-	Subtypes   []*Subtype `json:"subtype,omitempty"`    //子类型（用于选择第四方平台内支持的支付方式）
+	Subtypes   []*Subtype `json:"subtypes,omitempty"`   //子类型（用于选择第四方平台内支持的支付方式）
 	Options    Options    `json:"options,omitempty"`    //其它选项
 }
 
