@@ -13,7 +13,9 @@ type Query struct {
 }
 
 func NewQuery() *Query {
-	return &Query{}
+	return &Query{
+		Options: echo.H{},
+	}
 }
 
 func (q *Query) CopyFromRefund(f *Refund) *Query {

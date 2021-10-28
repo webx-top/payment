@@ -7,7 +7,11 @@ import (
 )
 
 func NewAccount() *Account {
-	return &Account{}
+	return &Account{
+		Options: Options{
+			Extra: echo.H{},
+		},
+	}
 }
 
 type Options struct {
@@ -60,5 +64,6 @@ func (c *Account) FromStore(v echo.Store) *Account {
 	c.Options.IconImage = options.String(`iconImage`)
 	c.Options.Title = options.String(`title`)
 	c.Options.Name = options.String(`name`)
+	c.Options.Extra = options.GetStore(`extra`)
 	return c
 }
