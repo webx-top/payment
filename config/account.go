@@ -32,10 +32,23 @@ type SubtypeOption struct {
 	Checked bool   `json:"label,omitempty"`
 }
 
+func NewSubtype(name string, label string, options ...*SubtypeOption) *Subtype {
+	return &Subtype{
+		Name:    name,
+		Label:   label,
+		Options: options,
+	}
+}
+
 type Subtype struct {
 	Name    string           `json:"name,omitempty"`
 	Label   string           `json:"label,omitempty"`
 	Options []*SubtypeOption `json:"options,omitempty"`
+}
+
+func (s *Subtype) Add(o ...*SubtypeOption) *Subtype {
+	s.Options = append(s.Options, o...)
+	return s
 }
 
 // Account 付款平台账号参数
@@ -51,6 +64,29 @@ type Account struct {
 	Currencies []string   `json:"currencies,omitempty"` //支持的币种
 	Subtypes   []*Subtype `json:"subtypes,omitempty"`   //子类型（用于选择第四方平台内支持的支付方式）
 	Options    Options    `json:"options,omitempty"`    //其它选项
+}
+
+var accountSetDefaults = map[string]func(a *Account){}
+
+func RegisterAccountSetDefaults(platform string, fn func(a *Account)) {
+	accountSetDefaults[platform] = fn
+}
+
+func UnregisterAccountSetDefaults(platform string) {
+	delete(accountSetDefaults, platform)
+}
+
+func (c *Account) SetDefaults(platform string) *Account {
+	fn, ok := accountSetDefaults[platform]
+	if ok {
+		fn(c)
+	}
+	return c
+}
+
+func (c *Account) AddSubtype(subtypes ...*Subtype) *Account {
+	c.Subtypes = append(c.Subtypes, subtypes...)
+	return c
 }
 
 func (c *Account) FromStore(v echo.Store) *Account {

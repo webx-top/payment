@@ -1,8 +1,6 @@
 package payment
 
 import (
-	"sync"
-
 	"github.com/webx-top/echo"
 	"github.com/webx-top/payment/config"
 )
@@ -21,7 +19,6 @@ type Hook interface {
 }
 
 var (
-	mutex     = &sync.RWMutex{}
 	platforms = map[string]string{} //platform=>name: alipay=>支付宝
 	payments  = map[string]func() Hook{}
 )
@@ -35,16 +32,15 @@ func Name(platform string) string {
 	return name
 }
 
-func Register(platform string, name string, hook func() Hook) {
-	mutex.Lock()
-	defer mutex.Unlock()
+func Register(platform string, name string, hook func() Hook, setDefaults ...func(*config.Account)) {
 	payments[platform] = hook
 	platforms[platform] = name
+	if len(setDefaults) > 0 {
+		config.RegisterAccountSetDefaults(platform, setDefaults[0])
+	}
 }
 
 func Get(platform string) (hook func() Hook) {
-	mutex.RLock()
-	defer mutex.RUnlock()
 	hook, _ = payments[platform]
 	return hook
 }

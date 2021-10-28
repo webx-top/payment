@@ -23,10 +23,24 @@ const (
 )
 
 func init() {
-	payment.Register(Name, `虎皮椒支付`, New)
+	payment.Register(Name, `虎皮椒支付`, New, SetDefaults)
 }
 
 var client = resty.NewWithClient(com.HTTPClientWithTimeout(30 * time.Second))
+
+func SetDefaults(a *config.Account) {
+	if len(a.Subtypes) == 0 {
+		a.AddSubtype(config.NewSubtype(
+			`payment`, `支付类型`,
+			&config.SubtypeOption{
+				Value: `alipay`, Text: `支付宝付款`, Checked: true,
+			},
+			&config.SubtypeOption{
+				Value: `wechat`, Text: `微信付款`,
+			},
+		))
+	}
+}
 
 func New() payment.Hook {
 	return &XunHuPay{client: client}
