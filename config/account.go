@@ -33,9 +33,8 @@ type SubtypeOption struct {
 	Checked  bool   `json:"label"`
 }
 
-func NewSubtype(name string, label string, options ...*SubtypeOption) *Subtype {
+func NewSubtype(label string, options ...*SubtypeOption) *Subtype {
 	return &Subtype{
-		Name:    name,
 		Label:   label,
 		Options: options,
 	}
@@ -43,7 +42,6 @@ func NewSubtype(name string, label string, options ...*SubtypeOption) *Subtype {
 
 type Subtype struct {
 	Disabled bool             `json:"disabled"`
-	Name     string           `json:"name"`
 	Label    string           `json:"label"`
 	Options  []*SubtypeOption `json:"options"`
 }

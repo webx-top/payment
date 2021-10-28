@@ -31,7 +31,7 @@ var client = resty.NewWithClient(com.HTTPClientWithTimeout(30 * time.Second))
 func SetDefaults(a *config.Account) {
 	if a.Subtype == nil {
 		a.Subtype = config.NewSubtype(
-			`payment`, `支付类型`,
+			`支付类型`,
 		)
 	}
 	if len(a.Subtype.Options) == 0 {
@@ -87,7 +87,7 @@ func (a *XunHuPay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, 
 		`version`:        []string{`1.1`},
 		`appid`:          []string{a.account.AppID},
 		`trade_order_id`: []string{cfg.OutTradeNo}, //订单编号
-		`payment`:        []string{`wechat`},
+		`payment`:        []string{cfg.Subtype},
 		`total_fee`:      []string{fmt.Sprint(cfg.Amount)}, // 订单金额(元)，单位为人民币，精确到分
 		`title`:          []string{title},
 		`time`:           []string{tss},

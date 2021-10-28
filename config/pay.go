@@ -9,6 +9,7 @@ import (
 // Pay 付款参数
 type Pay struct {
 	Platform       string    //付款平台（alipay/wechat/paypal）
+	Subtype        string    //子类型（用于选择第四方平台内支持的支付方式）
 	Device         Device    //付款时的设备
 	NotifyURL      string    //接收付款结果通知的网址
 	ReturnURL      string    //支付操作后返回的网址
