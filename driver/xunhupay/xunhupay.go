@@ -208,14 +208,14 @@ func (a *XunHuPay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result
 	if recvHash != hashString {
 		return nil, ctx.E(`invalid signature`)
 	}
-	data := recv.String(`data`)
-	if len(data) > 0 {
-		dataMap := echo.H{}
-		err = json.Unmarshal(com.Str2bytes(data), &dataMap)
-		if err != nil {
-			return nil, err
-		}
-	}
+	// data := recv.String(`data`)
+	// if len(data) > 0 {
+	// 	dataMap := echo.H{}
+	// 	err = json.Unmarshal(com.Str2bytes(data), &dataMap)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// }
 	var tradeStatus string
 	switch recv.String(`status`) {
 	case `OD`: // 支付成功
