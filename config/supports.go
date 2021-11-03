@@ -3,7 +3,7 @@ package config
 type Support int
 
 const (
-	SupportPayNotify Support = iota
+	SupportPayNotify Support = iota + 1
 	SupportPayQuery
 	SupportRefund
 	SupportRefundNotify
