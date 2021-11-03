@@ -212,25 +212,26 @@ func (a *XunHuPay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result
 	if errcode != 0 {
 		return nil, fmt.Errorf("[%d] %s", errcode, recv.String(`errmsg`))
 	}
-	recvHash := recv.String(`hash`)
-	respFormData := url.Values{}
-	for k, v := range recv {
-		respFormData.Set(k, param.AsString(v))
+	// com.Dump(recv)
+	/* recv = {
+	  "data": {
+	    "open_order_id": "20201558372",
+	    "out_trade_order": "RECHARGE168066492347187200",
+	    "paid_date": "2021-11-03 18:39:04",
+	    "pay_url": "weixin://wxpay/bizpayurl?pr=QpyXFy2zz",
+	    "payment_method": "two-wechat",
+	    "status": "OD",
+	    "title": "账号充值",
+	    "total_amount": "0.01",
+	    "transaction_id": "4200001232202111037855405793"
+	  },
+	  "errcode": 0,
+	  "errmsg": ""
 	}
-	hashString := GenerateHash(respFormData, a.account.AppSecret)
-	if recvHash != hashString {
-		return nil, ctx.E(`invalid signature`)
-	}
-	// data := recv.String(`data`)
-	// if len(data) > 0 {
-	// 	dataMap := echo.H{}
-	// 	err = json.Unmarshal(com.Str2bytes(data), &dataMap)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// }
+	*/
+	data := recv.GetStore(`data`)
 	var tradeStatus string
-	switch recv.String(`status`) {
+	switch data.String(`status`) {
 	case `OD`: // 支付成功
 		tradeStatus = config.TradeStatusSuccess
 	case `WP`: // 待支付
@@ -238,17 +239,26 @@ func (a *XunHuPay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result
 	case `CD`: // 已取消
 		tradeStatus = config.TradeStatusClosed
 	}
-	return &config.Result{
-		Operation:      config.OperationPayment,
-		Status:         tradeStatus,
-		TradeNo:        cfg.TradeNo,
-		OutTradeNo:     cfg.OutTradeNo,
+	r := &config.Result{
+		Operation: config.OperationPayment,
+		Status:    tradeStatus,
+		// TradeNo:        cfg.TradeNo,
+		// OutTradeNo:     cfg.OutTradeNo,
+		TradeNo:        data.String(`open_order_id`) + `|` + data.String(`transaction_id`),
+		OutTradeNo:     data.String(`out_trade_order`),
 		Currency:       ``,
 		PassbackParams: ``,
-		TotalAmount:    0,
+		TotalAmount:    data.Float64(`total_amount`),
 		Reason:         ``,
 		Raw:            recv,
-	}, err
+	}
+	if len(r.TradeNo) == 0 {
+		r.TradeNo = cfg.TradeNo
+	}
+	if len(r.OutTradeNo) == 0 {
+		r.OutTradeNo = cfg.OutTradeNo
+	}
+	return r, err
 }
 
 func (a *XunHuPay) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, error) {
