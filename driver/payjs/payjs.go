@@ -13,6 +13,12 @@ import (
 
 const Name = `payjs`
 
+var supports = config.Supports{
+	config.SupportPayNotify,
+	config.SupportPayQuery,
+	config.SupportRefund,
+}
+
 func init() {
 	payment.Register(Name, `PayJS支付`, New)
 }
@@ -25,6 +31,10 @@ type PayJS struct {
 	account        *config.Account
 	client         *payjs.PayJS
 	notifyCallback func(echo.Context) error
+}
+
+func (a *PayJS) IsSupported(s config.Support) bool {
+	return supports.IsSupported(s)
 }
 
 func (a *PayJS) SetNotifyCallback(callback func(echo.Context) error) payment.Hook {

@@ -14,6 +14,13 @@ import (
 
 const Name = `mugglepay`
 
+var supports = config.Supports{
+	config.SupportPayNotify,
+	config.SupportPayQuery,
+	config.SupportRefund,
+	config.SupportRefundNotify,
+}
+
 func init() {
 	payment.Register(Name, `麻瓜宝`, New)
 }
@@ -26,6 +33,10 @@ type Mugglepay struct {
 	account        *config.Account
 	client         *mugglepay.Mugglepay
 	notifyCallback func(echo.Context) error
+}
+
+func (a *Mugglepay) IsSupported(s config.Support) bool {
+	return supports.IsSupported(s)
 }
 
 func (a *Mugglepay) SetNotifyCallback(callback func(echo.Context) error) payment.Hook {

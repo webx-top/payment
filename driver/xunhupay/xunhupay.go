@@ -24,6 +24,11 @@ var (
 	APIQuery      = `/payment/query.html`
 )
 
+var supports = config.Supports{
+	config.SupportPayNotify,
+	config.SupportPayQuery,
+}
+
 func init() {
 	payment.Register(Name, `虎皮椒支付`, New)
 }
@@ -38,6 +43,10 @@ type XunHuPay struct {
 	account        *config.Account
 	client         *resty.Client
 	notifyCallback func(echo.Context) error
+}
+
+func (a *XunHuPay) IsSupported(s config.Support) bool {
+	return supports.IsSupported(s)
 }
 
 func (a *XunHuPay) SetNotifyCallback(callback func(echo.Context) error) payment.Hook {

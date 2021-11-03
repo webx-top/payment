@@ -18,6 +18,14 @@ import (
 
 const Name = `wechat`
 
+var supports = config.Supports{
+	config.SupportPayNotify,
+	config.SupportPayQuery,
+	config.SupportRefund,
+	config.SupportRefundNotify,
+	config.SupportRefundQuery,
+}
+
 func init() {
 	payment.Register(Name, `微信支付`, New)
 }
@@ -30,6 +38,10 @@ type Wechat struct {
 	account        *config.Account
 	client         *wxpay.Client
 	notifyCallback func(echo.Context) error
+}
+
+func (a *Wechat) IsSupported(s config.Support) bool {
+	return supports.IsSupported(s)
 }
 
 func (a *Wechat) SetNotifyCallback(callback func(echo.Context) error) payment.Hook {

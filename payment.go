@@ -7,6 +7,7 @@ import (
 
 // Hook 付款驱动接口
 type Hook interface {
+	IsSupported(config.Support) bool
 	SetNotifyCallback(callback func(echo.Context) error) Hook
 	SetAccount(*config.Account) Hook
 	Pay(echo.Context, *config.Pay) (*config.PayResponse, error)

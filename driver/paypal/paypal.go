@@ -10,6 +10,14 @@ import (
 
 const Name = `paypal`
 
+var supports = config.Supports{
+	config.SupportPayNotify,
+	config.SupportPayQuery,
+	config.SupportRefund,
+	config.SupportRefundNotify,
+	config.SupportRefundQuery,
+}
+
 func init() {
 	payment.Register(Name, `贝宝`, New)
 }
@@ -22,6 +30,10 @@ type Paypal struct {
 	account        *config.Account
 	client         *paypal.Client
 	notifyCallback func(echo.Context) error
+}
+
+func (a *Paypal) IsSupported(s config.Support) bool {
+	return supports.IsSupported(s)
 }
 
 func (a *Paypal) SetNotifyCallback(callback func(echo.Context) error) payment.Hook {

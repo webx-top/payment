@@ -17,6 +17,14 @@ import (
 
 const Name = `alipay`
 
+var supports = config.Supports{
+	config.SupportPayNotify,
+	config.SupportPayQuery,
+	config.SupportRefund,
+	config.SupportRefundNotify,
+	config.SupportRefundQuery,
+}
+
 func init() {
 	payment.Register(Name, `支付宝`, New)
 }
@@ -29,6 +37,10 @@ type Alipay struct {
 	account        *config.Account
 	client         *alipay.Client
 	notifyCallback func(echo.Context) error
+}
+
+func (a *Alipay) IsSupported(s config.Support) bool {
+	return supports.IsSupported(s)
 }
 
 func (a *Alipay) SetNotifyCallback(callback func(echo.Context) error) payment.Hook {
