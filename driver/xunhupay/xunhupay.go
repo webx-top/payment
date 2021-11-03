@@ -25,28 +25,10 @@ var (
 )
 
 func init() {
-	payment.Register(Name, `虎皮椒支付`, New, SetDefaults)
+	payment.Register(Name, `虎皮椒支付`, New)
 }
 
 var client = resty.NewWithClient(com.HTTPClientWithTimeout(30 * time.Second))
-
-func SetDefaults(a *config.Account) {
-	if a.Subtype == nil {
-		a.Subtype = config.NewSubtype(
-			`支付类型`,
-		)
-	}
-	if len(a.Subtype.Options) == 0 {
-		a.Subtype.Add(
-			&config.SubtypeOption{
-				Value: `alipay`, Text: `支付宝付款`, Checked: true,
-			},
-			&config.SubtypeOption{
-				Value: `wechat`, Text: `微信付款`,
-			},
-		)
-	}
-}
 
 func New() payment.Hook {
 	return &XunHuPay{client: client}
@@ -95,8 +77,7 @@ func (a *XunHuPay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, 
 	data := url.Values{
 		`version`:        []string{`1.1`},
 		`appid`:          []string{a.account.AppID},
-		`trade_order_id`: []string{cfg.OutTradeNo}, //订单编号
-		`payment`:        []string{cfg.Subtype},
+		`trade_order_id`: []string{cfg.OutTradeNo},         //订单编号
 		`total_fee`:      []string{fmt.Sprint(cfg.Amount)}, // 订单金额(元)，单位为人民币，精确到分
 		`title`:          []string{title},
 		`time`:           []string{tss},
@@ -104,8 +85,9 @@ func (a *XunHuPay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, 
 		`return_url`:     []string{cfg.ReturnURL}, //用户支付成功后，我们会让用户浏览器自动跳转到这个网址
 		`callback_url`:   []string{cfg.CancelURL}, //用户取消支付后，我们可能引导用户跳转到这个网址上重新进行支付
 		`nonce_str`:      []string{com.Md5(tss)},
-		//`plugins`:        []string{}, // 名称，用于识别对接程序或作者
-		//`attach`:         []string{cfg.PassbackParams}, //备注字段，可以传入一些备注数据，回调时原样返回
+		`plugins`:        []string{`coscms`},           // 名称，用于识别对接程序或作者
+		`attach`:         []string{cfg.PassbackParams}, //备注字段，可以传入一些备注数据，回调时原样返回
+		//`type`:           []string{`WAP`},            //支付通道类型，H5支付固定值"WAP"，小程序支付固定值"JSAPI" （支付宝不需要此参数）
 	}
 	if len(cfg.PassbackParams) > 0 {
 		data.Set(`attach`, cfg.PassbackParams)
@@ -117,9 +99,9 @@ func (a *XunHuPay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, 
 		}
 	}
 	if cfg.Options != nil {
-		payment := cfg.Options.String(`payment`)
-		if len(payment) > 0 {
-			data.Set(`payment`, payment)
+		typ := cfg.Options.String(`type`)
+		if len(typ) > 0 {
+			data.Set(`type`, typ)
 		}
 	}
 	data.Set(`hash`, GenerateHash(data, a.account.AppSecret))
@@ -169,6 +151,7 @@ func (a *XunHuPay) PayNotify(ctx echo.Context) error {
 	formData := url.Values(ctx.Forms())
 	status := formData.Get(`status`)
 	formHash := formData.Get(`hash`)
+	//pluginID := formData.Get(`plugins`)
 	hashString := GenerateHash(formData, a.account.AppSecret)
 	if formHash != hashString {
 		return ctx.String(`invalid signature`)
