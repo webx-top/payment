@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"sort"
 	"strings"
 
 	"github.com/admpub/log"
@@ -70,7 +71,8 @@ func (s *Subtype) GetOption(value string) *SubtypeOption {
 
 // Account 付款平台账号参数
 type Account struct {
-	Debug      bool     `json:"debug"`
+	Platform   string   `json:"platform"`             //付款平台（alipay/wechat/paypal）
+	Debug      bool     `json:"debug"`                //是否debug环境（如果支持沙箱环境则自动采用沙箱环境）
 	AppID      string   `json:"appID,omitempty"`      //即AppID
 	AppSecret  string   `json:"appSecret,omitempty"`  //即AppKey
 	MerchantID string   `json:"merchantID,omitempty"` //商家ID
@@ -80,6 +82,17 @@ type Account struct {
 	WebhookID  string   `json:"webhookID,omitempty"`  //Paypal使用的webhook id
 	Currencies []string `json:"currencies,omitempty"` //支持的币种
 	Subtype    *Subtype `json:"subtype,omitempty"`    //子类型（用于选择第四方平台内支持的支付方式）
+	Sort       int      `json:"sort"`                 //排序编号
+	Options    Options  `json:"options,omitempty"`    //其它选项
+}
+
+// AccountLite Account脱敏后的结构体
+type AccountLite struct {
+	Platform   string   `json:"platform"`             //付款平台（alipay/wechat/paypal）
+	Debug      bool     `json:"debug"`                //是否debug环境（如果支持沙箱环境则自动采用沙箱环境）
+	Currencies []string `json:"currencies,omitempty"` //支持的币种
+	Subtype    *Subtype `json:"subtype,omitempty"`    //子类型（用于选择第四方平台内支持的支付方式）
+	Sort       int      `json:"sort"`                 //排序编号
 	Options    Options  `json:"options,omitempty"`    //其它选项
 }
 
@@ -99,6 +112,17 @@ func (c *Account) SetDefaults(platform string) *Account {
 		fn(c)
 	}
 	return c
+}
+
+func (c *Account) Lite() *AccountLite {
+	return &AccountLite{
+		Platform:   c.Platform,
+		Debug:      c.Debug,
+		Currencies: c.Currencies,
+		Subtype:    c.Subtype,
+		Sort:       c.Sort,
+		Options:    c.Options,
+	}
 }
 
 func (c *Account) FromStore(v echo.Store) *Account {
@@ -148,4 +172,23 @@ func (c *Account) FromStore(v echo.Store) *Account {
 	c.Options.Name = options.String(`name`)
 	c.Options.Extra = options.GetStore(`extra`)
 	return c
+}
+
+type SortByAccount []*Account
+
+func (s SortByAccount) Len() int { return len(s) }
+func (s SortByAccount) Less(i, j int) bool {
+	return s[i].Sort < s[j].Sort
+}
+func (s SortByAccount) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s SortByAccount) Sort() SortByAccount {
+	sort.Sort(s)
+	return s
+}
+func (s SortByAccount) Lite() []*AccountLite {
+	r := make([]*AccountLite, len(s))
+	for k, v := range s {
+		r[k] = v.Lite()
+	}
+	return r
 }
