@@ -19,11 +19,11 @@ func NewAccount() *Account {
 }
 
 type Options struct {
-	IconClass string `json:"iconClass,omitempty"`
-	IconImage string `json:"iconImage,omitempty"`
-	Title     string `json:"title,omitempty"`
-	Name      string `json:"name,omitempty"`
-	Extra     echo.H `json:"extra,omitempty"`
+	IconClass string `json:"iconClass,omitempty"` //图标class属性值
+	IconImage string `json:"iconImage,omitempty"` //图标图片网址
+	Title     string `json:"title,omitempty"`     //支付网关标题(中文)
+	Name      string `json:"name,omitempty"`      //支付网关平台标识(英文)
+	Extra     echo.H `json:"extra,omitempty"`     //扩展数据
 }
 
 type SubtypeOption struct {
@@ -71,7 +71,6 @@ func (s *Subtype) GetOption(value string) *SubtypeOption {
 
 // Account 付款平台账号参数
 type Account struct {
-	Platform   string   `json:"platform"`             //付款平台（alipay/wechat/paypal）
 	Debug      bool     `json:"debug"`                //是否debug环境（如果支持沙箱环境则自动采用沙箱环境）
 	AppID      string   `json:"appID,omitempty"`      //即AppID
 	AppSecret  string   `json:"appSecret,omitempty"`  //即AppKey
@@ -88,7 +87,6 @@ type Account struct {
 
 // AccountLite Account脱敏后的结构体
 type AccountLite struct {
-	Platform   string   `json:"platform"`             //付款平台（alipay/wechat/paypal）
 	Debug      bool     `json:"debug"`                //是否debug环境（如果支持沙箱环境则自动采用沙箱环境）
 	Currencies []string `json:"currencies,omitempty"` //支持的币种
 	Subtype    *Subtype `json:"subtype,omitempty"`    //子类型（用于选择第四方平台内支持的支付方式）
@@ -116,7 +114,6 @@ func (c *Account) SetDefaults(platform string) *Account {
 
 func (c *Account) Lite() *AccountLite {
 	return &AccountLite{
-		Platform:   c.Platform,
 		Debug:      c.Debug,
 		Currencies: c.Currencies,
 		Subtype:    c.Subtype,
@@ -165,6 +162,7 @@ func (c *Account) FromStore(v echo.Store) *Account {
 			}
 		}
 	}
+	c.Sort = v.Int(`sort`)
 	options := v.GetStore(`options`)
 	c.Options.IconClass = options.String(`iconClass`)
 	c.Options.IconImage = options.String(`iconImage`)
