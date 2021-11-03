@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/admpub/resty/v2"
@@ -19,9 +18,10 @@ import (
 const Name = `xunhupay`
 
 var (
-	APIPay         = `https://api.xunhupay.com/payment`
-	APIWxNativePay = `https://api.xunhupay.com/payment/do.html`
-	APIQuery       = `https://api.xunhupay.com/payment/query.html`
+	SandboxURL    = `https://api.diypc.com.cn` // 测试环境接口
+	ProductionURL = `https://api.xunhupay.com` // 生产环境接口
+	APIPay        = `/payment/do.html`
+	APIQuery      = `/payment/query.html`
 )
 
 func init() {
@@ -76,6 +76,13 @@ func (a *XunHuPay) Client() *resty.Request {
 	return a.client.R()
 }
 
+func (a *XunHuPay) generateURL(endpoint string) string {
+	if a.account.Debug {
+		return SandboxURL + endpoint
+	}
+	return ProductionURL + endpoint
+}
+
 func (a *XunHuPay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, error) {
 	ts := time.Now().Unix()
 	tss := fmt.Sprint(ts)
@@ -117,12 +124,8 @@ func (a *XunHuPay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, 
 	}
 	data.Set(`hash`, GenerateHash(data, a.account.AppSecret))
 	apiURL := APIPay
-	if data.Get(`payment`) == `wechat` {
-		if strings.Contains(ctx.Request().UserAgent(), `MicroMessenger`) {
-			apiURL = APIWxNativePay
-		}
-	}
 	recv := echo.H{}
+	apiURL = a.generateURL(apiURL)
 	resp, err := a.Client().SetResult(&recv).SetFormDataFromValues(data).Post(apiURL)
 	if err != nil {
 		return nil, err
@@ -148,7 +151,7 @@ func (a *XunHuPay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, 
 		QRCodeImageURL: recv.String(`url_qrcode`),
 		RedirectURL:    recv.String(`url`),
 		Params:         echo.H{},
-		Raw:            resp,
+		Raw:            recv,
 	}
 	jsapi := recv.String(`jsapi`)
 	if len(jsapi) > 0 {
@@ -214,7 +217,8 @@ func (a *XunHuPay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result
 	}
 	formData.Set(`hash`, GenerateHash(formData, a.account.AppSecret))
 	recv := echo.H{}
-	resp, err := a.Client().SetResult(&recv).SetFormDataFromValues(formData).Post(APIQuery)
+	apiURL := a.generateURL(APIQuery)
+	resp, err := a.Client().SetResult(&recv).SetFormDataFromValues(formData).Post(apiURL)
 	if err != nil {
 		return nil, err
 	}
@@ -260,7 +264,7 @@ func (a *XunHuPay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result
 		PassbackParams: ``,
 		TotalAmount:    0,
 		Reason:         ``,
-		Raw:            resp,
+		Raw:            recv,
 	}, err
 }
 
