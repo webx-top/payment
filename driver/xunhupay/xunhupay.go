@@ -161,6 +161,18 @@ func (a *XunHuPay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, 
 		`attach`:         []string{cfg.PassbackParams}, //备注字段，可以传入一些备注数据，回调时原样返回
 		//`type`:           []string{`WAP`},            //支付通道类型，H5支付固定值"WAP"，小程序支付固定值"JSAPI" （支付宝不需要此参数）
 	}
+	if cfg.Subtype == `wechat` {
+		switch cfg.Device {
+		case config.Wap:
+			data.Set(`type`, `WAP`)
+		//case config.Web:
+		//case config.App:
+		default:
+			if strings.Contains(ctx.Request().UserAgent(), `MicroMessenger`) {
+				data.Set(`type`, `JSAPI`)
+			}
+		}
+	}
 	if len(cfg.PassbackParams) > 0 {
 		data.Set(`attach`, cfg.PassbackParams)
 	}
