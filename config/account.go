@@ -31,7 +31,7 @@ type SubtypeOption struct {
 	Value    string `json:"value"`
 	Text     string `json:"text"`
 	Image    string `json:"image"`
-	Checked  bool   `json:"label"`
+	Checked  bool   `json:"checked"`
 }
 
 func NewSubtype(label string, options ...*SubtypeOption) *Subtype {
