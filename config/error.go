@@ -8,6 +8,10 @@ var (
 	ErrPaymentFailed = errors.New("Payment failed")
 	ErrRefundFailed  = errors.New("Refund failed")
 	ErrUnsupported   = errors.New("Unsupported")
+
+	ErrAppIDRequired     = errors.New(`App ID required`)
+	ErrAppSecretRequired = errors.New(`App Secret required`)
+	ErrSubtypeRequired   = errors.New(`Subtype required`)
 )
 
 func IsOK(err error) bool {
