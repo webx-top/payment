@@ -9,10 +9,10 @@ require (
 	github.com/admpub/fsnotify v1.5.0 // indirect
 	github.com/admpub/go-reuseport v0.0.4 // indirect
 	github.com/admpub/humanize v0.0.0-20190501023926-5f826e92c8ca // indirect
-	github.com/admpub/log v1.2.3
+	github.com/admpub/log v1.3.2
 	github.com/admpub/mugglepay v0.0.8
 	github.com/admpub/realip v0.0.0-20210421084339-374cf5df122d // indirect
-	github.com/admpub/resty/v2 v2.6.0
+	github.com/admpub/resty/v2 v2.7.0
 	github.com/goccy/go-json v0.7.10 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/mattn/go-colorable v0.1.11 // indirect
@@ -24,11 +24,11 @@ require (
 	github.com/smartwalle/paypal v1.0.1
 	github.com/webx-top/captcha v0.0.0-20161202061115-29e9e7f30aa0 // indirect
 	github.com/webx-top/codec v0.1.1
-	github.com/webx-top/com v0.2.10
-	github.com/webx-top/echo v2.22.4+incompatible
+	github.com/webx-top/com v0.2.12
+	github.com/webx-top/echo v2.22.17+incompatible
 	github.com/webx-top/validation v0.0.3 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
-	golang.org/x/net v0.0.0-20211020060615-d418f374d309 // indirect
-	golang.org/x/sys v0.0.0-20211025201205-69cdffdb9359 // indirect
+	golang.org/x/net v0.0.0-20211105192438-b53810dc28af // indirect
+	golang.org/x/sys v0.0.0-20211105183446-c75c47738b0c // indirect
 	golang.org/x/text v0.3.7 // indirect
 )
