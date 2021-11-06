@@ -21,6 +21,7 @@ func NewQuery() *Query {
 
 func (q *Query) CopyFromRefund(f *Refund) *Query {
 	q.Platform = f.Platform
+	q.Subtype = f.Subtype
 	q.TradeNo = f.TradeNo
 	q.OutTradeNo = f.OutTradeNo
 	q.RefundNo = f.RefundNo
