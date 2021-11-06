@@ -7,6 +7,7 @@ import (
 
 	"github.com/webx-top/com"
 	"github.com/webx-top/echo"
+	"github.com/webx-top/payment/config"
 )
 
 func GenerateHash(data url.Values, secret string) string {
@@ -27,16 +28,5 @@ func GenerateHash(data url.Values, secret string) string {
 }
 
 func (a *XunHuPay) VerifySign(ctx echo.Context) error {
-	formData := url.Values(ctx.Forms())
-	status := formData.Get(`status`)
-	if status != `OD` {
-		return ctx.String(status)
-	}
-	formHash := formData.Get(`hash`)
-	hashString := GenerateHash(formData, a.account.AppSecret)
-	if formHash != hashString {
-		return ctx.String(`invalid signature`)
-	}
-
-	return ctx.String(`success`)
+	return config.ErrUnsupported
 }

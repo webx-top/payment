@@ -210,7 +210,7 @@ func (a *XunHuPay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, 
 	}
 	hashString := GenerateHash(formData, appSecret)
 	if recvHash != hashString {
-		return nil, ctx.E(`invalid signature`)
+		return nil, config.ErrSignature
 	}
 	result := &config.PayResponse{
 		TradeNo:        recv.String(`oderid`),
@@ -239,7 +239,7 @@ func (a *XunHuPay) PayNotify(ctx echo.Context) error {
 	appSecret := a.parseAppSecret(subtype)
 	hashString := GenerateHash(formData, appSecret)
 	if formHash != hashString {
-		return ctx.String(`invalid signature`)
+		return ctx.String(config.ErrSignature.Error())
 	}
 
 	var tradeStatus string
