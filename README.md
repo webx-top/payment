@@ -7,6 +7,7 @@
 3. 支持PayPal支付
 4. 支持PayJS支付
 5. 支持MugglePay加密货币支付
+6. 支持XunhuPay(虎皮椒)支付
 
 ## 打赏
 <a href="https://donate.cafe/hanks">
