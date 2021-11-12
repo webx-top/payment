@@ -167,7 +167,7 @@ func (a *Wechat) PayNotify(ctx echo.Context) error {
 		}
 	}
 	if !isSuccess {
-		xmlString = noti.NotOK("faild")
+		xmlString = noti.NotOK("failed")
 	} else {
 		xmlString = noti.OK()
 	}
@@ -312,7 +312,7 @@ func (a *Wechat) RefundNotify(ctx echo.Context) error {
 		}
 	}
 	if !isSuccess {
-		xmlString = noti.NotOK("faild")
+		xmlString = noti.NotOK("failed")
 	} else {
 		xmlString = noti.OK()
 	}

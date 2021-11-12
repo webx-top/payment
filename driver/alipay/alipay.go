@@ -96,6 +96,22 @@ func (a *Alipay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, er
 	}
 	var err error
 	result := &config.PayResponse{}
+	if a.account.Options.Extra != nil {
+		_payConfig := a.account.Options.Extra.GetStore(`payConfig`)
+		productCode := _payConfig.String(`productCode`)
+		switch productCode {
+		case `FACE_TO_FACE_PAYMENT`, `OFFLINE_PAYMENT`:
+			payConfig.ProductCode = productCode
+			pay := alipay.TradePreCreate{Trade: payConfig}
+			results, err := a.Client().TradePreCreate(pay)
+			if err != nil {
+				return result, err
+			}
+			result.QRCodeContent = results.Content.QRCode
+			result.Raw = results
+			return result, err
+		}
+	}
 	switch cfg.Device {
 	case config.App:
 		payConfig.ProductCode = `QUICK_MSECURITY_PAY`
@@ -165,7 +181,7 @@ func (a *Alipay) PayNotify(ctx echo.Context) error {
 	if isSuccess {
 		return ctx.String(`success`)
 	}
-	return ctx.String(`faild`)
+	return ctx.String(`failed`)
 }
 
 func (a *Alipay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result, error) {
@@ -246,7 +262,7 @@ func (a *Alipay) RefundNotify(ctx echo.Context) error {
 
 	var isSuccess = true
 	if a.notifyCallback != nil {
-		status := notify.String(`trade_status`)
+		status := notify.String(`trade_status`) //交易状态：WAIT_BUYER_PAY（交易创建，等待买家付款）、TRADE_CLOSED（未付款交易超时关闭，或支付完成后全额退款）、TRADE_SUCCESS（交易支付成功）、TRADE_FINISHED（交易结束，不可退款）
 		result := &config.Result{
 			Operation:   config.OperationRefund,
 			Status:      status,
@@ -268,7 +284,7 @@ func (a *Alipay) RefundNotify(ctx echo.Context) error {
 	if isSuccess {
 		return ctx.String(`success`)
 	}
-	return ctx.String(`faild`)
+	return ctx.String(`failed`)
 }
 
 func (a *Alipay) RefundQuery(ctx echo.Context, cfg *config.Query) (*config.Result, error) {
