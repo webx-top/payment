@@ -209,7 +209,7 @@ func (a *Alipay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result, 
 		TradeNo:     resp.Content.TradeNo,
 		OutTradeNo:  resp.Content.OutTradeNo,
 		Currency:    resp.Content.PayCurrency,
-		TotalAmount: param.AsFloat64(resp.Content.PayAmount),
+		TotalAmount: param.AsFloat64(resp.Content.TotalAmount),
 		Reason:      resp.Content.SubMsg,
 		Raw:         resp,
 	}, err
