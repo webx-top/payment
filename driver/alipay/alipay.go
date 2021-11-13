@@ -232,6 +232,11 @@ func (a *Alipay) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, e
 		StoreId:      ``, // 可选 商户的门店编号
 		TerminalId:   ``, // 可选 商户的终端编号
 	}
+	if cfg.Options != nil {
+		refundConfig.OperatorId = cfg.Options.String(`operatorId`)
+		refundConfig.StoreId = cfg.Options.String(`storeId`)
+		refundConfig.TerminalId = cfg.Options.String(`terminalId`)
+	}
 	if len(refundConfig.OutRequestNo) == 0 {
 		refundConfig.OutRequestNo = fmt.Sprintf("%d%d", time.Now().Local().Unix(), rand.Intn(9999))
 	}
