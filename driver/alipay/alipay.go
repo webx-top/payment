@@ -107,6 +107,12 @@ func (a *Alipay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, er
 			if err != nil {
 				return result, err
 			}
+			if !results.IsSuccess() {
+				if len(results.Content.SubMsg) > 0 {
+					results.Content.Msg += `: ` + results.Content.SubMsg
+				}
+				return nil, errors.New(results.Content.Msg)
+			}
 			result.QRCodeContent = results.Content.QRCode
 			result.Raw = results
 			return result, err
