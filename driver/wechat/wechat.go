@@ -227,6 +227,7 @@ func (a *Wechat) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, e
 		"out_refund_no": cfg.OutRefundNo,
 		"total_fee":     MoneyFeeToString(cfg.TotalAmount),
 		"refund_fee":    MoneyFeeToString(cfg.RefundAmount),
+		"refund_desc":   cfg.RefundReason,
 	}
 	if len(cfg.NotifyURL) > 0 {
 		refundConfig[`notify_url`] = cfg.NotifyURL
