@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/admpub/copier v0.0.2 // indirect
-	github.com/admpub/decimal v0.0.2
+	github.com/admpub/decimal v1.3.1
 	github.com/admpub/events v1.2.0 // indirect
 	github.com/admpub/fsnotify v1.5.0 // indirect
 	github.com/admpub/go-reuseport v0.0.4 // indirect
