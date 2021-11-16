@@ -93,37 +93,14 @@ func (a *XunHuPay) generateURL(endpoint string) string {
 	return ProductionURL + endpoint
 }
 
-func (a *XunHuPay) parseAccount(cfg string, subtype string) string {
-	cfg = strings.Trim(cfg, ` ;`)
-	items := strings.Split(cfg, `;`)
-	end := len(items) - 1
-	for index, item := range items {
-		item := strings.TrimSpace(item)
-		if len(item) == 0 {
-			continue
-		}
-		parts := strings.SplitN(item, `=`, 2)
-		if len(parts) != 2 {
-			if index == end {
-				return item
-			}
-		} else {
-			if parts[0] == subtype {
-				return parts[1]
-			}
-		}
-	}
-	return ``
-}
-
 func (a *XunHuPay) parseAppID(subtype string) (appID string) {
 	// alipay=appID;wechat=appID
-	return a.parseAccount(a.account.AppID, subtype)
+	return a.account.ParseAppID(subtype)
 }
 
 func (a *XunHuPay) parseAppSecret(subtype string) (appSecret string) {
 	// alipay=appSecret;wechat=appSecret
-	return a.parseAccount(a.account.AppSecret, subtype)
+	return a.account.ParseAppSecret(subtype)
 }
 
 func (a *XunHuPay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, error) {

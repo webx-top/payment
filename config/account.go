@@ -172,6 +172,39 @@ func (c *Account) FromStore(v echo.Store) *Account {
 	return c
 }
 
+func (c *Account) ParseAppID(subtype string) (appID string) {
+	// alipay=appID;wechat=appID
+	return ParseMultiAccount(c.AppID, subtype)
+}
+
+func (c *Account) ParseAppSecret(subtype string) (appSecret string) {
+	// alipay=appSecret;wechat=appSecret
+	return ParseMultiAccount(c.AppSecret, subtype)
+}
+
+func ParseMultiAccount(cfg string, subtype string) string {
+	cfg = strings.Trim(cfg, ` ;`)
+	items := strings.Split(cfg, `;`)
+	end := len(items) - 1
+	for index, item := range items {
+		item := strings.TrimSpace(item)
+		if len(item) == 0 {
+			continue
+		}
+		parts := strings.SplitN(item, `=`, 2)
+		if len(parts) != 2 {
+			if index == end {
+				return item
+			}
+		} else {
+			if parts[0] == subtype {
+				return parts[1]
+			}
+		}
+	}
+	return ``
+}
+
 type SortByAccount []*Account
 
 func (s SortByAccount) Len() int { return len(s) }
