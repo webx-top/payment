@@ -119,6 +119,7 @@ func (a *PayJS) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, err
 
 // PayNotify 付款回调处理
 // documentation https://help.payjs.cn/api-lie-biao/jiao-yi-xin-xi-tui-song.html
+// TODO: 验证签名
 func (a *PayJS) PayNotify(ctx echo.Context) error {
 	payNotify := a.Client().GetNotify(ctx.Request().StdRequest(), ctx.Response().StdResponseWriter())
 

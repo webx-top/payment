@@ -12,10 +12,10 @@ type Hook interface {
 	SetAccount(*config.Account) Hook
 	Pay(echo.Context, *config.Pay) (*config.PayResponse, error)
 	PayQuery(echo.Context, *config.Query) (*config.Result, error)
-	PayNotify(echo.Context) error
+	PayNotify(echo.Context) error //! *务必在内部验证签名*
 	Refund(echo.Context, *config.Refund) (*config.Result, error)
 	RefundQuery(echo.Context, *config.Query) (*config.Result, error)
-	RefundNotify(echo.Context) error
+	RefundNotify(echo.Context) error //! *务必在内部验证签名*
 	VerifySign(echo.Context) error
 }
 

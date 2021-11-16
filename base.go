@@ -35,6 +35,7 @@ func (a *Base) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, erro
 }
 
 // PayNotify 付款回调处理
+//! *务必在内部验证签名*
 func (a *Base) PayNotify(ctx echo.Context) error {
 	return config.ErrUnsupported
 }
@@ -48,6 +49,7 @@ func (a *Base) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, err
 }
 
 // RefundNotify 退款回调处理
+//! *务必在内部验证签名*
 func (a *Base) RefundNotify(ctx echo.Context) error {
 	return config.ErrUnsupported
 }
