@@ -12,6 +12,8 @@ func New() *Base {
 }
 
 type Base struct {
+	Account        *config.Account
+	NotifyCallback func(echo.Context) error
 }
 
 func (a *Base) IsSupported(s config.Support) bool {
@@ -19,10 +21,12 @@ func (a *Base) IsSupported(s config.Support) bool {
 }
 
 func (a *Base) SetNotifyCallback(callback func(echo.Context) error) Hook {
+	a.NotifyCallback = callback
 	return a
 }
 
 func (a *Base) SetAccount(account *config.Account) Hook {
+	a.Account = account
 	return a
 }
 
