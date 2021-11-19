@@ -53,7 +53,7 @@ func (s *Subtype) Add(o ...*SubtypeOption) *Subtype {
 
 func (s *Subtype) Exists(value string) bool {
 	for _, o := range s.Options {
-		if o.Value == value {
+		if !o.Disabled && o.Value == value {
 			return true
 		}
 	}
