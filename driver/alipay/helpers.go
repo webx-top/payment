@@ -3,7 +3,7 @@ package alipay
 import (
 	"net/url"
 
-	alipay "github.com/smartwalle/alipay/v3"
+	alipay "github.com/admpub/alipay/v3"
 	"github.com/webx-top/echo"
 	"github.com/webx-top/echo/param"
 	"github.com/webx-top/payment"

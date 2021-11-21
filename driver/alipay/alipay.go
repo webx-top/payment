@@ -7,8 +7,8 @@ import (
 	"net/url"
 	"time"
 
+	alipay "github.com/admpub/alipay/v3"
 	"github.com/admpub/log"
-	alipay "github.com/smartwalle/alipay/v3"
 	"github.com/webx-top/echo"
 	"github.com/webx-top/echo/param"
 	"github.com/webx-top/payment"
@@ -209,9 +209,10 @@ func (a *Alipay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result, 
 		}
 		return nil, errors.New(resp.Content.Msg)
 	}
+
 	return &config.Result{
 		Operation:   config.OperationPayment,
-		Status:      config.TradeStatusSuccess,
+		Status:      string(resp.Content.TradeStatus),
 		TradeNo:     resp.Content.TradeNo,
 		OutTradeNo:  resp.Content.OutTradeNo,
 		Currency:    resp.Content.PayCurrency,
@@ -318,9 +319,20 @@ func (a *Alipay) RefundQuery(ctx echo.Context, cfg *config.Query) (*config.Resul
 		}
 		return nil, errors.New(resp.Content.Msg)
 	}
+	var status string
+	switch resp.Content.RefundStatus {
+	case `REFUND_SUCCESS`:
+		status = config.TradeStatusSuccess
+	case `REFUND_FAIL`:
+		status = config.TradeStatusException
+	case `REFUND_PROCESSING`:
+		status = config.TradeStatusProcessing
+	default:
+		status = config.TradeStatusProcessing
+	}
 	return &config.Result{
 		Operation:   config.OperationRefund,
-		Status:      config.TradeStatusSuccess,
+		Status:      status,
 		TradeNo:     resp.Content.TradeNo,
 		OutTradeNo:  resp.Content.OutTradeNo,
 		Currency:    ``,
