@@ -285,7 +285,7 @@ func (a *Wechat) RefundNotify(ctx echo.Context) error {
 		return fmt.Errorf(`base64decode(%v): %v`, reqInfo, err)
 	}
 	key := strings.ToLower(com.Md5(a.account.AppSecret))
-	crypto := codec.NewAesECBCrypto(`AES-256`)
+	crypto := codec.NewAESECB(`AES-256`)
 	b = crypto.DecodeBytes(b, []byte(key))
 	for k, v := range XmlToMap(string(b)) {
 		resp[k] = v
