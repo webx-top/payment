@@ -14,6 +14,7 @@ import (
 	"github.com/webx-top/echo/param"
 	"github.com/webx-top/payment"
 	"github.com/webx-top/payment/config"
+	"github.com/webx-top/restyclient"
 )
 
 const Name = `xunhupay`
@@ -34,8 +35,6 @@ func init() {
 	payment.Register(Name, `虎皮椒支付`, New, SetDefaults)
 }
 
-var client = resty.NewWithClient(com.HTTPClientWithTimeout(30 * time.Second))
-
 func SetDefaults(a *config.Account) {
 	if a.Subtype == nil {
 		a.Subtype = config.NewSubtype(
@@ -55,12 +54,11 @@ func SetDefaults(a *config.Account) {
 }
 
 func New() payment.Hook {
-	return &XunHuPay{client: client}
+	return &XunHuPay{}
 }
 
 type XunHuPay struct {
 	account        *config.Account
-	client         *resty.Client
 	notifyCallback func(echo.Context) error
 }
 
@@ -79,11 +77,7 @@ func (a *XunHuPay) SetAccount(account *config.Account) payment.Hook {
 }
 
 func (a *XunHuPay) Client() *resty.Request {
-	if a.client != nil {
-		return a.client.R()
-	}
-	a.client = client
-	return a.client.R()
+	return restyclient.Retryable()
 }
 
 func (a *XunHuPay) generateURL(endpoint string) string {
