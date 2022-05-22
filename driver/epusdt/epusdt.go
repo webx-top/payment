@@ -80,9 +80,9 @@ func (a *EPUSDT) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, er
 		TradeNo:        recv.Data.TradeId,
 		RedirectURL:    recv.Data.PaymentUrl,
 		QRCodeImageURL: ``,
-		QRCodeContent:  recv.Data.Token,
-		Params:         echo.H{},
-		Raw:            recv,
+		//QRCodeContent:  recv.Data.Token,
+		Params: echo.H{},
+		Raw:    recv,
 	}
 	return result, nil
 }
