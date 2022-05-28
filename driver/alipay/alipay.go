@@ -146,7 +146,7 @@ func (a *Alipay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, er
 		}
 		result.RedirectURL = url.String()
 	default:
-		return nil, config.ErrUnknowDevice
+		return nil, config.ErrUnknownDevice
 	}
 	return result, err
 }

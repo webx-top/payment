@@ -3,14 +3,16 @@ package config
 import "errors"
 
 var (
-	ErrUnknowDevice  = errors.New("Unknow device type")
-	ErrSignature     = errors.New("Signature error")
-	ErrPaymentFailed = errors.New("Payment failed")
-	ErrRefundFailed  = errors.New("Refund failed")
-	ErrUnsupported   = errors.New("Unsupported")
+	ErrTradeAlreadyExists  = errors.New("payment trade already exists")
+	ErrUnknownDevice       = errors.New("unknown device type")
+	ErrSignature           = errors.New("signature error")
+	ErrPaymentFailed       = errors.New("payment failed")
+	ErrRefundAlreadyExists = errors.New("refund request already exists")
+	ErrRefundFailed        = errors.New("refund failed")
+	ErrUnsupported         = errors.New("unsupported")
 
-	ErrAppIDRequired     = errors.New(`App ID required`)
-	ErrAppSecretRequired = errors.New(`App Secret required`)
+	ErrAppIDRequired     = errors.New(`AppID required`)
+	ErrAppSecretRequired = errors.New(`AppSecret required`)
 	ErrSubtypeRequired   = errors.New(`Subtype required`)
 )
 

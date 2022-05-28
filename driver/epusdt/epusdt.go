@@ -74,6 +74,9 @@ func (a *EPUSDT) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, er
 		return nil, fmt.Errorf("%s: %s", resp.Status(), com.StripTags(resp.String()))
 	}
 	if recv.StatusCode != http.StatusOK {
+		if recv.StatusCode == 10002 {
+			return nil, config.ErrTradeAlreadyExists
+		}
 		return nil, errors.New(recv.Message)
 	}
 	result := &config.PayResponse{
