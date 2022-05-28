@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/admpub/resty/v2"
 	"github.com/webx-top/com"
@@ -16,10 +17,14 @@ import (
 
 const Name = `epusdt`
 
-var URLCreateOrder = `/api/v1/order/create-transaction`
+var (
+	URLCreateOrder = `/api/v1/order/create-transaction`
+	URLQueryOrder  = `/api/v1/order/query-transaction`
+)
 
 var supports = config.Supports{
 	config.SupportPayNotify,
+	config.SupportPayQuery,
 }
 
 func init() {
@@ -62,10 +67,14 @@ func (a *EPUSDT) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, er
 		Amount:      cfg.Amount,
 		NotifyUrl:   cfg.NotifyURL,
 		RedirectUrl: cfg.ReturnURL,
+		Timestamp:   time.Now().Unix(),
 	}
 	data := order.URLValues()
 	order.Signature = GenerateSign(data, a.account.AppSecret)
-	recv := &Response{}
+	trade := &CreateTransactionResponse{}
+	recv := &Response{
+		Data: trade,
+	}
 	resp, err := a.Client().SetResult(recv).SetBody(order).Post(a.apiURL + URLCreateOrder)
 	if err != nil {
 		return nil, err
@@ -80,10 +89,10 @@ func (a *EPUSDT) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, er
 		return nil, errors.New(recv.Message)
 	}
 	result := &config.PayResponse{
-		TradeNo:        recv.Data.TradeId,
-		RedirectURL:    recv.Data.PaymentUrl,
+		TradeNo:        trade.TradeId,
+		RedirectURL:    trade.PaymentUrl,
 		QRCodeImageURL: ``,
-		//QRCodeContent:  recv.Data.Token,
+		//QRCodeContent:  trade.Token,
 		Params: echo.H{},
 		Raw:    recv,
 	}
@@ -122,7 +131,39 @@ func (a *EPUSDT) PayNotify(ctx echo.Context) error {
 
 // PayQuery documentation
 func (a *EPUSDT) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result, error) {
-	return nil, config.ErrUnsupported
+	query := QueryTransactionRequest{
+		TradeId:   cfg.TradeNo,
+		Timestamp: time.Now().Unix(),
+	}
+	data := query.URLValues()
+	query.Signature = GenerateSign(data, a.account.AppSecret)
+	queryResult := &QueryTransactionResponse{}
+	recv := &Response{
+		Data: queryResult,
+	}
+	resp, err := a.Client().SetResult(recv).SetBody(query).Post(a.apiURL + URLQueryOrder)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("%s: %s", resp.Status(), com.StripTags(resp.String()))
+	}
+	if recv.StatusCode != http.StatusOK {
+		return nil, errors.New(recv.Message)
+	}
+	result := &config.Result{
+		Operation:   config.OperationPayment,
+		TradeNo:     cfg.TradeNo,
+		OutTradeNo:  cfg.OutTradeNo,
+		Currency:    queryResult.Currency,
+		TotalAmount: queryResult.Amount,
+		PayCurrency: queryResult.ActualCurrency,
+		PayAmount:   queryResult.ActualAmount,
+		Reason:      ``,
+		Raw:         recv,
+	}
+	MappingStatus(queryResult.Status, result)
+	return result, err
 }
 
 // Refund 退款
