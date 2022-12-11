@@ -3,7 +3,7 @@ module github.com/webx-top/payment
 go 1.16
 
 require (
-	github.com/admpub/alipay/v3 v3.0.2
+	github.com/admpub/alipay/v3 v3.0.3
 	github.com/admpub/decimal v1.3.1
 	github.com/admpub/events v1.3.5 // indirect
 	github.com/admpub/fasthttp v0.0.5 // indirect
@@ -23,7 +23,7 @@ require (
 	github.com/webx-top/captcha v0.1.0 // indirect
 	github.com/webx-top/codec v0.2.1
 	github.com/webx-top/com v0.8.2
-	github.com/webx-top/echo v2.32.3+incompatible
+	github.com/webx-top/echo v2.33.0+incompatible
 	github.com/webx-top/poolx v0.0.0-20210912044716-5cfa2d58e380 // indirect
 	github.com/webx-top/restyclient v0.0.3
 	github.com/webx-top/validation v0.0.3 // indirect
