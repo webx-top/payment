@@ -25,7 +25,7 @@ func init() {
 	payment.Register(Name, `麻瓜宝`, New)
 }
 
-func New() payment.Hook {
+func New() payment.Driver {
 	return &Mugglepay{}
 }
 
@@ -39,12 +39,12 @@ func (a *Mugglepay) IsSupported(s config.Support) bool {
 	return supports.IsSupported(s)
 }
 
-func (a *Mugglepay) SetNotifyCallback(callback func(echo.Context) error) payment.Hook {
+func (a *Mugglepay) SetNotifyCallback(callback func(echo.Context) error) payment.Driver {
 	a.notifyCallback = callback
 	return a
 }
 
-func (a *Mugglepay) SetAccount(account *config.Account) payment.Hook {
+func (a *Mugglepay) SetAccount(account *config.Account) payment.Driver {
 	a.account = account
 	return a
 }

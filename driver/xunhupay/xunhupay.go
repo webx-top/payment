@@ -53,7 +53,7 @@ func SetDefaults(a *config.Account) {
 	}
 }
 
-func New() payment.Hook {
+func New() payment.Driver {
 	return &XunHuPay{}
 }
 
@@ -66,12 +66,12 @@ func (a *XunHuPay) IsSupported(s config.Support) bool {
 	return supports.IsSupported(s)
 }
 
-func (a *XunHuPay) SetNotifyCallback(callback func(echo.Context) error) payment.Hook {
+func (a *XunHuPay) SetNotifyCallback(callback func(echo.Context) error) payment.Driver {
 	a.notifyCallback = callback
 	return a
 }
 
-func (a *XunHuPay) SetAccount(account *config.Account) payment.Hook {
+func (a *XunHuPay) SetAccount(account *config.Account) payment.Driver {
 	a.account = account
 	return a
 }

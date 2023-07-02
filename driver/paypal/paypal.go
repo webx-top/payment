@@ -22,7 +22,7 @@ func init() {
 	payment.Register(Name, `贝宝`, New)
 }
 
-func New() payment.Hook {
+func New() payment.Driver {
 	return &Paypal{}
 }
 
@@ -36,12 +36,12 @@ func (a *Paypal) IsSupported(s config.Support) bool {
 	return supports.IsSupported(s)
 }
 
-func (a *Paypal) SetNotifyCallback(callback func(echo.Context) error) payment.Hook {
+func (a *Paypal) SetNotifyCallback(callback func(echo.Context) error) payment.Driver {
 	a.notifyCallback = callback
 	return a
 }
 
-func (a *Paypal) SetAccount(account *config.Account) payment.Hook {
+func (a *Paypal) SetAccount(account *config.Account) payment.Driver {
 	a.account = account
 	return a
 }
@@ -60,9 +60,9 @@ func (a *Paypal) Client() *paypal.Client {
 
 func (a *Paypal) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, error) {
 	var p = &paypal.Payment{}
-	p.Intent = paypal.K_PAYMENT_INTENT_SALE
+	p.Intent = paypal.PaymentIntentSale
 	p.Payer = &paypal.Payer{}
-	p.Payer.PaymentMethod = paypal.K_PAYMENT_METHOD_PAYPAL
+	p.Payer.PaymentMethod = paypal.PaymentMethodPayPal
 	p.RedirectURLs = &paypal.RedirectURLs{}
 	p.RedirectURLs.CancelURL = cfg.CancelURL
 	p.RedirectURLs.ReturnURL = cfg.ReturnURL
@@ -110,7 +110,7 @@ func (a *Paypal) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result, 
 		transactionFeeValue    string // 交易手续费金额
 		transactionFeeCurrency string // 交易手续费币种
 	)
-	if payment.State == paypal.K_PAYMENT_STATE_APPROVED {
+	if payment.State == paypal.PaymentStateApproved {
 		paid = true
 	}
 	for _, transaction := range payment.Transactions {
@@ -122,7 +122,7 @@ func (a *Paypal) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result, 
 			currency = resource.Sale.Amount.Currency
 			transactionFeeValue = resource.Sale.TransactionFee.Value
 			transactionFeeCurrency = resource.Sale.TransactionFee.Currency
-			if resource.Sale.State != paypal.K_SALE_STATE_COMPLETED {
+			if resource.Sale.State != paypal.SaleStateCompleted {
 				paid = false
 				break
 			}
@@ -158,7 +158,7 @@ func (a *Paypal) PayNotify(ctx echo.Context) error {
 		return nil
 	}
 	switch event.EventType {
-	case paypal.K_EVENT_TYPE_PAYMENT_SALE_COMPLETED:
+	case paypal.EventTypePaymentSaleCompleted:
 		sale := event.Sale()
 		if a.notifyCallback != nil {
 			var reason, sep string
@@ -186,7 +186,7 @@ func (a *Paypal) PayNotify(ctx echo.Context) error {
 				return err
 			}
 		}
-	case paypal.K_EVENT_TYPE_PAYMENT_SALE_REFUNDED:
+	case paypal.EventTypePaymentSaleRefunded:
 		refund := event.Refund()
 		if len(refund.Description) > 0 {
 			refund.Reason += "; " + refund.Description
@@ -235,13 +235,13 @@ func (a *Paypal) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, e
 	}
 	var status string
 	switch refund.State {
-	case paypal.K_REFUND_STATE_COMPLETED:
+	case paypal.RefundStateCompleted:
 		status = config.TradeStatusSuccess
-	case paypal.K_REFUND_STATE_CANCELLED:
+	case paypal.RefundStateCancelled:
 		status = config.TradeStatusClosed
-	case paypal.K_REFUND_STATE_FAILED:
+	case paypal.RefundStateFailed:
 		status = config.TradeStatusException
-	case paypal.K_REFUND_STATE_PENDING:
+	case paypal.RefundStatePending:
 		status = config.TradeStatusProcessing
 	}
 	return &config.Result{
@@ -267,13 +267,13 @@ func (a *Paypal) RefundQuery(ctx echo.Context, cfg *config.Query) (*config.Resul
 	}
 	var status string
 	switch refund.State {
-	case paypal.K_REFUND_STATE_COMPLETED:
+	case paypal.RefundStateCompleted:
 		status = config.TradeStatusSuccess
-	case paypal.K_REFUND_STATE_CANCELLED:
+	case paypal.RefundStateCancelled:
 		status = config.TradeStatusClosed
-	case paypal.K_REFUND_STATE_FAILED:
+	case paypal.RefundStateFailed:
 		status = config.TradeStatusException
-	case paypal.K_REFUND_STATE_PENDING:
+	case paypal.RefundStatePending:
 		status = config.TradeStatusProcessing
 	}
 	return &config.Result{

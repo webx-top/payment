@@ -23,7 +23,7 @@ func init() {
 	payment.Register(Name, `PayJS支付`, New)
 }
 
-func New() payment.Hook {
+func New() payment.Driver {
 	return &PayJS{}
 }
 
@@ -37,12 +37,12 @@ func (a *PayJS) IsSupported(s config.Support) bool {
 	return supports.IsSupported(s)
 }
 
-func (a *PayJS) SetNotifyCallback(callback func(echo.Context) error) payment.Hook {
+func (a *PayJS) SetNotifyCallback(callback func(echo.Context) error) payment.Driver {
 	a.notifyCallback = callback
 	return a
 }
 
-func (a *PayJS) SetAccount(account *config.Account) payment.Hook {
+func (a *PayJS) SetAccount(account *config.Account) payment.Driver {
 	a.account = account
 	return a
 }

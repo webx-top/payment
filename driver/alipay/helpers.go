@@ -1,6 +1,7 @@
 package alipay
 
 import (
+	"fmt"
 	"net/url"
 
 	alipay "github.com/admpub/alipay/v3"
@@ -15,12 +16,9 @@ func (a *Alipay) VerifySign(ctx echo.Context) error {
 }
 
 func (a *Alipay) verifySign(req url.Values) error {
-	ok, err := a.Client().VerifySign(req)
+	err := a.Client().VerifySign(req)
 	if err != nil {
-		return err
-	}
-	if !ok {
-		return config.ErrSignature
+		return fmt.Errorf(`%w: %v`, config.ErrSignature, err)
 	}
 	return nil
 }

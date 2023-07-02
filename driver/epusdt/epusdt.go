@@ -31,7 +31,7 @@ func init() {
 	payment.Register(Name, `USDT`, New)
 }
 
-func New() payment.Hook {
+func New() payment.Driver {
 	return &EPUSDT{}
 }
 
@@ -45,12 +45,12 @@ func (a *EPUSDT) IsSupported(s config.Support) bool {
 	return supports.IsSupported(s)
 }
 
-func (a *EPUSDT) SetNotifyCallback(callback func(echo.Context) error) payment.Hook {
+func (a *EPUSDT) SetNotifyCallback(callback func(echo.Context) error) payment.Driver {
 	a.notifyCallback = callback
 	return a
 }
 
-func (a *EPUSDT) SetAccount(account *config.Account) payment.Hook {
+func (a *EPUSDT) SetAccount(account *config.Account) payment.Driver {
 	a.account = account
 	a.apiURL = strings.TrimSuffix(account.Options.Extra.String(`apiURL`), `/`)
 	return a

@@ -30,7 +30,7 @@ func init() {
 	payment.Register(Name, `微信支付`, New)
 }
 
-func New() payment.Hook {
+func New() payment.Driver {
 	return &Wechat{}
 }
 
@@ -44,12 +44,12 @@ func (a *Wechat) IsSupported(s config.Support) bool {
 	return supports.IsSupported(s)
 }
 
-func (a *Wechat) SetNotifyCallback(callback func(echo.Context) error) payment.Hook {
+func (a *Wechat) SetNotifyCallback(callback func(echo.Context) error) payment.Driver {
 	a.notifyCallback = callback
 	return a
 }
 
-func (a *Wechat) SetAccount(account *config.Account) payment.Hook {
+func (a *Wechat) SetAccount(account *config.Account) payment.Driver {
 	a.account = account
 	return a
 }
