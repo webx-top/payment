@@ -30,6 +30,6 @@ require (
 	github.com/webx-top/poolx v0.0.0-20210912044716-5cfa2d58e380 // indirect
 	github.com/webx-top/restyclient v0.0.4
 	github.com/webx-top/validation v0.0.3 // indirect
-	golang.org/x/net v0.11.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
 )
