@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"sort"
 	"strings"
 
 	"github.com/admpub/log"
@@ -85,15 +84,6 @@ type Account struct {
 	Options    Options  `json:"options,omitempty"`    //其它选项
 }
 
-// AccountLite Account脱敏后的结构体
-type AccountLite struct {
-	Debug      bool     `json:"debug"`                //是否debug环境（如果支持沙箱环境则自动采用沙箱环境）
-	Currencies []string `json:"currencies,omitempty"` //支持的币种
-	Subtype    *Subtype `json:"subtype,omitempty"`    //子类型（用于选择第四方平台内支持的支付方式）
-	Sort       int      `json:"sort"`                 //排序编号
-	Options    Options  `json:"options,omitempty"`    //其它选项
-}
-
 var accountSetDefaults = map[string]func(a *Account){}
 
 func RegisterAccountSetDefaults(platform string, fn func(a *Account)) {
@@ -102,6 +92,15 @@ func RegisterAccountSetDefaults(platform string, fn func(a *Account)) {
 
 func UnregisterAccountSetDefaults(platform string) {
 	delete(accountSetDefaults, platform)
+}
+
+func (c *Account) HasCurrency(currencies ...string) bool {
+	for _, currency := range currencies {
+		if !com.InSlice(currency, c.Currencies) {
+			return false
+		}
+	}
+	return true
 }
 
 func (c *Account) SetDefaults(platform string) *Account {
@@ -203,23 +202,4 @@ func ParseMultiAccount(cfg string, subtype string) string {
 		}
 	}
 	return ``
-}
-
-type SortByAccount []*Account
-
-func (s SortByAccount) Len() int { return len(s) }
-func (s SortByAccount) Less(i, j int) bool {
-	return s[i].Sort < s[j].Sort
-}
-func (s SortByAccount) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
-func (s SortByAccount) Sort() SortByAccount {
-	sort.Sort(s)
-	return s
-}
-func (s SortByAccount) Lite() []*AccountLite {
-	r := make([]*AccountLite, len(s))
-	for k, v := range s {
-		r[k] = v.Lite()
-	}
-	return r
 }

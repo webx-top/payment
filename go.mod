@@ -1,9 +1,9 @@
 module github.com/webx-top/payment
 
-go 1.21
+go 1.23
 
 require (
-	github.com/admpub/alipay/v3 v3.2.22
+	github.com/admpub/alipay/v3 v3.2.23
 	github.com/admpub/decimal v1.3.1
 	github.com/admpub/log v1.3.6
 	github.com/admpub/mugglepay v0.0.8
@@ -12,9 +12,9 @@ require (
 	github.com/qingwg/payjs v0.0.0-20190928033402-c53dbe16b371
 	github.com/smartwalle/paypal v1.0.2
 	github.com/webx-top/codec v0.3.0
-	github.com/webx-top/com v1.2.13
-	github.com/webx-top/echo v1.6.4
-	github.com/webx-top/restyclient v0.0.4
+	github.com/webx-top/com v1.3.19
+	github.com/webx-top/echo v1.13.6
+	github.com/webx-top/restyclient v0.0.5
 )
 
 require (
@@ -25,12 +25,12 @@ require (
 	github.com/admpub/go-reuseport v0.0.4 // indirect
 	github.com/admpub/humanize v0.0.0-20190501023926-5f826e92c8ca // indirect
 	github.com/admpub/once v0.0.1 // indirect
-	github.com/admpub/realip v0.2.4 // indirect
-	github.com/admpub/timeago v1.2.1 // indirect
+	github.com/admpub/realip v0.2.7 // indirect
+	github.com/admpub/timeago v1.2.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/francoispqt/gojay v1.2.13 // indirect
-	github.com/goccy/go-json v0.10.2 // indirect
-	github.com/hashicorp/go-version v1.6.0 // indirect
+	github.com/goccy/go-json v0.10.4 // indirect
+	github.com/hashicorp/go-version v1.7.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -43,15 +43,15 @@ require (
 	github.com/smartwalle/ncrypto v1.0.4 // indirect
 	github.com/smartwalle/ngx v1.0.9 // indirect
 	github.com/smartwalle/nsign v1.0.9 // indirect
-	github.com/stretchr/testify v1.8.4 // indirect
+	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/webx-top/captcha v0.1.0 // indirect
 	github.com/webx-top/poolx v0.0.0-20210912044716-5cfa2d58e380 // indirect
 	github.com/webx-top/tagfast v0.0.1 // indirect
 	github.com/webx-top/validation v0.0.3 // indirect
-	golang.org/x/crypto v0.22.0 // indirect
-	golang.org/x/net v0.24.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/sys v0.19.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/net v0.33.0 // indirect
+	golang.org/x/sync v0.10.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

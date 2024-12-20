@@ -103,7 +103,7 @@ func (a *Alipay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, er
 		case `FACE_TO_FACE_PAYMENT`, `OFFLINE_PAYMENT`:
 			payConfig.ProductCode = productCode
 			pay := alipay.TradePreCreate{Trade: payConfig}
-			results, err := a.Client().TradePreCreate(pay)
+			results, err := a.Client().TradePreCreate(ctx, pay)
 			if err != nil {
 				return result, err
 			}
@@ -199,7 +199,7 @@ func (a *Alipay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result, 
 	} else {
 		pay.OutTradeNo = cfg.OutTradeNo
 	}
-	resp, err := a.Client().TradeQuery(pay)
+	resp, err := a.Client().TradeQuery(ctx, pay)
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +233,7 @@ func (a *Alipay) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, e
 	if len(refundConfig.OutRequestNo) == 0 {
 		refundConfig.OutRequestNo = fmt.Sprintf("%d%d", time.Now().Local().Unix(), rand.Intn(9999))
 	}
-	resp, err := a.Client().TradeRefund(refundConfig)
+	resp, err := a.Client().TradeRefund(ctx, refundConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +301,7 @@ func (a *Alipay) RefundQuery(ctx echo.Context, cfg *config.Query) (*config.Resul
 	} else {
 		pay.OutTradeNo = cfg.OutTradeNo
 	}
-	resp, err := a.Client().TradeFastPayRefundQuery(pay)
+	resp, err := a.Client().TradeFastPayRefundQuery(ctx, pay)
 	if err != nil {
 		return nil, err
 	}
