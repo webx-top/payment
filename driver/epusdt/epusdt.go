@@ -70,6 +70,9 @@ func (a *EPUSDT) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, er
 		RedirectUrl: cfg.ReturnURL,
 		Timestamp:   time.Now().Unix(),
 	}
+	if len(cfg.Subtype) > 0 {
+		order.TradeType = cfg.Subtype
+	}
 	data := order.URLValues()
 	order.Signature = GenerateSign(data, a.account.AppSecret)
 	trade := &CreateTransactionResponse{}
