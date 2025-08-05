@@ -54,7 +54,7 @@ func GenerateSign(data url.Values, token string) string {
 func SetDefaults(a *config.Account) {
 	if a.Subtype == nil {
 		a.Subtype = config.NewSubtype(
-			`网络`,
+			`合约网络`,
 		)
 	}
 	if len(a.Subtype.Options) == 0 {
