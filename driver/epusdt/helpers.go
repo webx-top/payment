@@ -70,6 +70,7 @@ func SetDefaults(a *config.Account) {
 			return
 		}
 		length := len(currencies)
+		needPrefix := length > 1 || a.Options.Title != currencies[0]
 		for i, currency := range currencies {
 			for j, network := range networks[currency] {
 				stype := &config.SubtypeOption{
@@ -77,7 +78,7 @@ func SetDefaults(a *config.Account) {
 					Text:    network.Label,
 					Checked: i == 0 && j == 0,
 				}
-				if length > 1 {
+				if needPrefix {
 					stype.Text = currency + ` • ` + network.Label
 				}
 				a.Subtype.Add(stype)
