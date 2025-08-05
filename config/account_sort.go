@@ -1,11 +1,18 @@
 package config
 
-import "sort"
+import (
+	"sort"
+
+	"github.com/admpub/collate"
+)
 
 type SortByAccount []*Account
 
 func (s SortByAccount) Len() int { return len(s) }
 func (s SortByAccount) Less(i, j int) bool {
+	if s[i].Sort == s[j].Sort {
+		return collate.Less(s[i].Options.Title, s[j].Options.Title)
+	}
 	return s[i].Sort < s[j].Sort
 }
 func (s SortByAccount) Swap(i, j int) { s[i], s[j] = s[j], s[i] }

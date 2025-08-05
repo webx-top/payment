@@ -18,6 +18,7 @@ require (
 )
 
 require (
+	github.com/admpub/collate v1.2.0 // indirect
 	github.com/admpub/color v1.8.1 // indirect
 	github.com/admpub/events v1.3.6 // indirect
 	github.com/admpub/fsnotify v1.7.0 // indirect
