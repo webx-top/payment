@@ -70,12 +70,12 @@ func SetDefaults(a *config.Account) {
 			return
 		}
 		length := len(currencies)
-		for index, currency := range currencies {
-			for _, network := range networks[currency] {
+		for i, currency := range currencies {
+			for j, network := range networks[currency] {
 				stype := &config.SubtypeOption{
 					Value:   network.Value,
 					Text:    network.Label,
-					Checked: index == 0,
+					Checked: i == 0 && j == 0,
 				}
 				if length > 1 {
 					stype.Text = currency + ` • ` + network.Label
