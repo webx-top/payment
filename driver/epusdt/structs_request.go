@@ -12,17 +12,22 @@ type CreateTransactionRequest struct {
 	NotifyUrl   string  `json:"notify_url" validate:"required"`
 	Signature   string  `json:"signature" validate:"required"`
 	RedirectUrl string  `json:"redirect_url"`
+	TradeType   string  `json:"trade_type,omitempty"`
 	Timestamp   int64   `json:"timestamp" validate:"required"`
 }
 
 func (c *CreateTransactionRequest) URLValues() url.Values {
-	return url.Values{
+	v := url.Values{
 		"order_id":     []string{c.OrderId},
 		"amount":       []string{fmt.Sprint(c.Amount)},
 		"notify_url":   []string{c.NotifyUrl},
 		"redirect_url": []string{c.RedirectUrl},
 		"timestamp":    []string{fmt.Sprint(c.Timestamp)},
 	}
+	if len(c.TradeType) > 0 {
+		v.Set("trade_type", c.TradeType) // bepusdt
+	}
+	return v
 }
 
 // QueryTransactionRequest 查询交易请求
@@ -35,6 +40,18 @@ type QueryTransactionRequest struct {
 func (c *QueryTransactionRequest) URLValues() url.Values {
 	return url.Values{
 		"trade_id":  []string{c.TradeId},
+		"timestamp": []string{fmt.Sprint(c.Timestamp)},
+	}
+}
+
+// QueryNetworksRequest 查询支持的智能合约网络请求
+type QueryNetworksRequest struct {
+	Timestamp int64  `json:"timestamp" validate:"required"`
+	Signature string `json:"signature"  validate:"required"`
+}
+
+func (c *QueryNetworksRequest) URLValues() url.Values {
+	return url.Values{
 		"timestamp": []string{fmt.Sprint(c.Timestamp)},
 	}
 }

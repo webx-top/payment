@@ -1,13 +1,19 @@
 package epusdt
 
 import (
+	"errors"
+	"fmt"
+	"net/http"
 	"net/url"
 	"sort"
 	"strings"
+	"time"
 
+	"github.com/admpub/log"
 	"github.com/webx-top/com"
 	"github.com/webx-top/echo"
 	"github.com/webx-top/payment/config"
+	"github.com/webx-top/restyclient"
 )
 
 // MappingStatus Order Status
@@ -43,4 +49,63 @@ func GenerateSign(data url.Values, token string) string {
 		sortedData[i] = v + `=` + data.Get(v)
 	}
 	return com.Md5(strings.Join(sortedData, `&`) + token)
+}
+
+func SetDefaults(a *config.Account) {
+	if a.Subtype == nil {
+		a.Subtype = config.NewSubtype(
+			`网络`,
+		)
+	}
+	if len(a.Subtype.Options) == 0 {
+		var currencies []string
+		if len(a.Currencies) == 0 {
+			currencies = []string{`USDT`}
+		} else {
+			currencies = a.Currencies
+		}
+		networks, err := queryNetworks(a)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+		length := len(currencies)
+		for index, currency := range currencies {
+			for _, network := range networks[currency] {
+				stype := &config.SubtypeOption{
+					Value:   network.Value,
+					Text:    network.Label,
+					Checked: index == 0,
+				}
+				if length > 1 {
+					stype.Text = currency + ` • ` + network.Label
+				}
+				a.Subtype.Add(stype)
+			}
+		}
+	}
+}
+
+func queryNetworks(account *config.Account) (map[string][]QueryNetworkResponse, error) {
+	apiURL := strings.TrimSuffix(account.Options.Extra.String(`apiURL`), `/`)
+	query := QueryNetworksRequest{
+		Timestamp: time.Now().Unix(),
+	}
+	data := query.URLValues()
+	query.Signature = GenerateSign(data, account.AppSecret)
+	queryResult := map[string][]QueryNetworkResponse{}
+	recv := &Response{
+		Data: &queryResult,
+	}
+	resp, err := restyclient.Retryable().SetResult(recv).SetBody(query).Post(apiURL + URLQueryNet)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("%s: %s", resp.Status(), com.StripTags(resp.String()))
+	}
+	if recv.StatusCode != http.StatusOK {
+		return nil, errors.New(recv.Message)
+	}
+	return queryResult, err
 }

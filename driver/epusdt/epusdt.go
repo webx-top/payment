@@ -20,6 +20,7 @@ const Name = `epusdt`
 var (
 	URLCreateOrder = `/api/v1/order/create-transaction`
 	URLQueryOrder  = `/api/v1/order/query-transaction`
+	URLQueryNet    = `/api/v1/order/query-networks`
 )
 
 var supports = config.Supports{
@@ -28,7 +29,7 @@ var supports = config.Supports{
 }
 
 func init() {
-	payment.Register(Name, `USDT`, New)
+	payment.Register(Name, `USDT`, New, SetDefaults)
 }
 
 func New() payment.Driver {

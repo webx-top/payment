@@ -65,3 +65,8 @@ func (c *OrderNotifyResponse) URLValues() url.Values {
 func (c *OrderNotifyResponse) Verify(token string) bool {
 	return c.Signature == GenerateSign(c.URLValues(), token)
 }
+
+type QueryNetworkResponse struct {
+	Value string `json:"value"`
+	Label string `json:"label"`
+}
