@@ -14,6 +14,7 @@ type CreateTransactionRequest struct {
 	RedirectUrl string  `json:"redirect_url"`
 	TradeType   string  `json:"trade_type,omitempty"`
 	Timestamp   int64   `json:"timestamp" validate:"required"`
+	Nonce       string  `json:"nonce,omitempty"` // 一次性随机字符串
 }
 
 func (c *CreateTransactionRequest) URLValues() url.Values {
@@ -27,6 +28,9 @@ func (c *CreateTransactionRequest) URLValues() url.Values {
 	if len(c.TradeType) > 0 {
 		v.Set("trade_type", c.TradeType) // bepusdt
 	}
+	if len(c.Nonce) > 0 {
+		v["nonce"] = []string{c.Nonce}
+	}
 	return v
 }
 
@@ -35,23 +39,33 @@ type QueryTransactionRequest struct {
 	TradeId   string `json:"trade_id" validate:"required|maxLen:32"`
 	Timestamp int64  `json:"timestamp" validate:"required"`
 	Signature string `json:"signature"  validate:"required"`
+	Nonce     string `json:"nonce,omitempty"` // 一次性随机字符串
 }
 
 func (c *QueryTransactionRequest) URLValues() url.Values {
-	return url.Values{
+	v := url.Values{
 		"trade_id":  []string{c.TradeId},
 		"timestamp": []string{fmt.Sprint(c.Timestamp)},
 	}
+	if len(c.Nonce) > 0 {
+		v["nonce"] = []string{c.Nonce}
+	}
+	return v
 }
 
 // QueryNetworksRequest 查询支持的智能合约网络请求
 type QueryNetworksRequest struct {
 	Timestamp int64  `json:"timestamp" validate:"required"`
 	Signature string `json:"signature"  validate:"required"`
+	Nonce     string `json:"nonce,omitempty"` // 一次性随机字符串
 }
 
 func (c *QueryNetworksRequest) URLValues() url.Values {
-	return url.Values{
+	v := url.Values{
 		"timestamp": []string{fmt.Sprint(c.Timestamp)},
 	}
+	if len(c.Nonce) > 0 {
+		v["nonce"] = []string{c.Nonce}
+	}
+	return v
 }
