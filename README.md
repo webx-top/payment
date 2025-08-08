@@ -10,6 +10,3 @@
 6. 支持XunhuPay(虎皮椒)支付
 
 ## 打赏
-<a href="https://donate.cafe/hanks">
-  <img style="width:150px" src="https://newbie.zeromesh.net/donate.7.6.svg" />
-</a>
