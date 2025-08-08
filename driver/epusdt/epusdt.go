@@ -74,6 +74,7 @@ func (a *EPUSDT) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, er
 		order.TradeType = cfg.Subtype
 	}
 	data := order.URLValues()
+	data.Set(`nonce`, payment.GenerateNonce())
 	order.Signature = GenerateSign(data, a.account.AppSecret)
 	trade := &CreateTransactionResponse{}
 	recv := &Response{
@@ -140,6 +141,7 @@ func (a *EPUSDT) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result, 
 		Timestamp: time.Now().Unix(),
 	}
 	data := query.URLValues()
+	data.Set(`nonce`, payment.GenerateNonce())
 	query.Signature = GenerateSign(data, a.account.AppSecret)
 	queryResult := &QueryTransactionResponse{}
 	recv := &Response{

@@ -12,6 +12,7 @@ import (
 	"github.com/admpub/log"
 	"github.com/webx-top/com"
 	"github.com/webx-top/echo"
+	"github.com/webx-top/payment"
 	"github.com/webx-top/payment/config"
 	"github.com/webx-top/restyclient"
 )
@@ -93,6 +94,7 @@ func queryNetworks(account *config.Account) (map[string][]QueryNetworkResponse, 
 		Timestamp: time.Now().Unix(),
 	}
 	data := query.URLValues()
+	data.Set(`nonce`, payment.GenerateNonce())
 	query.Signature = GenerateSign(data, account.AppSecret)
 	queryResult := map[string][]QueryNetworkResponse{}
 	recv := &Response{
