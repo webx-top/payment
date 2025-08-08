@@ -92,9 +92,9 @@ func queryNetworks(account *config.Account) (map[string][]QueryNetworkResponse, 
 	apiURL := strings.TrimSuffix(account.Options.Extra.String(`apiURL`), `/`)
 	query := QueryNetworksRequest{
 		Timestamp: time.Now().Unix(),
+		Nonce:     payment.GenerateNonce(),
 	}
 	data := query.URLValues()
-	data.Set(`nonce`, payment.GenerateNonce())
 	query.Signature = GenerateSign(data, account.AppSecret)
 	queryResult := map[string][]QueryNetworkResponse{}
 	recv := &Response{
