@@ -20,6 +20,9 @@ func TestPay(t *testing.T) {
 	h := New()
 	c := config.NewAccount()
 	c.AppSecret = os.Getenv(`EPUSDT_API_TOKEN`)
+	if len(c.AppSecret) == 0 {
+		return
+	}
 	apiURL := os.Getenv(`EPUSDT_API_URL`)
 	c.Options.Extra.Set(`apiURL`, apiURL)
 	h.SetAccount(c)
@@ -43,6 +46,9 @@ func TestQueryPay(t *testing.T) {
 	h := New()
 	c := config.NewAccount()
 	c.AppSecret = os.Getenv(`EPUSDT_API_TOKEN`)
+	if len(c.AppSecret) == 0 {
+		return
+	}
 	apiURL := os.Getenv(`EPUSDT_API_URL`)
 	c.Options.Extra.Set(`apiURL`, apiURL)
 	h.SetAccount(c)
