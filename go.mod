@@ -4,6 +4,7 @@ go 1.24.0
 
 require (
 	github.com/admpub/alipay/v3 v3.2.23
+	github.com/admpub/collate v1.2.0
 	github.com/admpub/decimal v1.3.2
 	github.com/admpub/log v1.4.0
 	github.com/admpub/mugglepay v0.0.8
@@ -18,7 +19,6 @@ require (
 )
 
 require (
-	github.com/admpub/collate v1.2.0 // indirect
 	github.com/admpub/color v1.8.1 // indirect
 	github.com/admpub/events v1.3.6 // indirect
 	github.com/admpub/fsnotify v1.7.0 // indirect
@@ -49,10 +49,10 @@ require (
 	github.com/webx-top/poolx v0.0.0-20210912044716-5cfa2d58e380 // indirect
 	github.com/webx-top/tagfast v0.0.1 // indirect
 	github.com/webx-top/validation v0.0.3 // indirect
-	golang.org/x/crypto v0.40.0 // indirect
-	golang.org/x/net v0.42.0 // indirect
-	golang.org/x/sync v0.16.0 // indirect
-	golang.org/x/sys v0.34.0 // indirect
-	golang.org/x/text v0.27.0 // indirect
+	golang.org/x/crypto v0.45.0 // indirect
+	golang.org/x/net v0.47.0 // indirect
+	golang.org/x/sync v0.18.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
