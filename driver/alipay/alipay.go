@@ -73,7 +73,7 @@ func (a *Alipay) Client() *alipay.Client {
 		}
 	}
 	if len(a.account.CertPath) > 0 {
-		if err := a.client.LoadAliPayPublicCertFromFile(a.account.CertPath); err != nil {
+		if err := a.client.LoadAlipayCertPublicKeyFromFile(a.account.CertPath); err != nil {
 			log.Error(err)
 		}
 	}
