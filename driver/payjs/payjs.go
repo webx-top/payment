@@ -136,7 +136,7 @@ func (a *PayJS) PayNotify(ctx echo.Context) error {
 				OutTradeNo:     msg.OutTradeNo,
 				Currency:       ``,
 				PassbackParams: msg.Attach,
-				TotalAmount:    param.AsFloat64(payment.CutFloat(float64(msg.TotalFee)/100, 2)),
+				TotalAmount:    payment.Round(float64(msg.TotalFee)/100, 2),
 				Reason:         ``,
 				Raw:            msg,
 			}
@@ -179,7 +179,7 @@ func (a *PayJS) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result, e
 		OutTradeNo:     resp.OutTradeNo,
 		Currency:       ``,
 		PassbackParams: resp.Attach,
-		TotalAmount:    param.AsFloat64(payment.CutFloat(float64(resp.TotalFee)/100, 2)),
+		TotalAmount:    payment.Round(float64(resp.TotalFee)/100, 2),
 		Reason:         resp.ReturnMsg,
 		Raw:            resp,
 	}, err

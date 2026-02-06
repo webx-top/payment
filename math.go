@@ -2,13 +2,20 @@ package payment
 
 import "github.com/admpub/decimal"
 
-// ==== string ====
+// ==== 返回 string ====
 
 // CutFloat 非四舍五入的方式保留小数位数
 // * money 金额
 // * precision 小数位数
 func CutFloat(money float64, precision int32) string {
 	return decimal.NewFromFloat(money).Truncate(precision).String()
+}
+
+// RoundFloat 四舍五入的方式保留小数位数
+// * money 金额
+// * precision 小数位数
+func RoundFloat(money float64, precision int32) string {
+	return decimal.NewFromFloat(money).Round(precision).String()
 }
 
 // MulFloat 小数相乘
@@ -18,7 +25,7 @@ func CutFloat(money float64, precision int32) string {
 func MulFloat(money float64, multiple float64, precision int32) string {
 	aDecimal := decimal.NewFromFloat(money)
 	bDecimal := decimal.NewFromFloat(multiple)
-	return aDecimal.Mul(bDecimal).Truncate(precision).String()
+	return aDecimal.Mul(bDecimal).Round(precision).String()
 }
 
 // AddFloat 小数相加
@@ -28,7 +35,7 @@ func MulFloat(money float64, multiple float64, precision int32) string {
 func AddFloat(money float64, money2 float64, precision int32) string {
 	aDecimal := decimal.NewFromFloat(money)
 	bDecimal := decimal.NewFromFloat(money2)
-	return aDecimal.Add(bDecimal).Truncate(precision).String()
+	return aDecimal.Add(bDecimal).Round(precision).String()
 }
 
 // SubFloat 小数相减
@@ -38,7 +45,7 @@ func AddFloat(money float64, money2 float64, precision int32) string {
 func SubFloat(money float64, money2 float64, precision int32) string {
 	aDecimal := decimal.NewFromFloat(money)
 	bDecimal := decimal.NewFromFloat(money2)
-	return aDecimal.Sub(bDecimal).Truncate(precision).String()
+	return aDecimal.Sub(bDecimal).Round(precision).String()
 }
 
 // DivFloat 小数相除
@@ -48,17 +55,23 @@ func SubFloat(money float64, money2 float64, precision int32) string {
 func DivFloat(money float64, money2 float64, precision int32) string {
 	aDecimal := decimal.NewFromFloat(money)
 	bDecimal := decimal.NewFromFloat(money2)
-	return aDecimal.Div(bDecimal).Truncate(precision).String()
+	return aDecimal.Div(bDecimal).Round(precision).String()
 }
 
-// ==== float64 ====
+// ==== 返回 float64 ====
 
 // Cut 非四舍五入的方式保留小数位数
 // * money 金额
 // * precision 小数位数
 func Cut(money float64, precision int32) float64 {
-	v, _ := decimal.NewFromFloat(money).Truncate(precision).Float64()
-	return v
+	return decimal.NewFromFloat(money).Truncate(precision).InexactFloat64()
+}
+
+// Round 四舍五入的方式保留小数位数
+// * money 金额
+// * precision 小数位数
+func Round(money float64, precision int32) float64 {
+	return decimal.NewFromFloat(money).Round(precision).InexactFloat64()
 }
 
 // Mul 小数相乘
@@ -68,8 +81,7 @@ func Cut(money float64, precision int32) float64 {
 func Mul(money float64, multiple float64, precision int32) float64 {
 	aDecimal := decimal.NewFromFloat(money)
 	bDecimal := decimal.NewFromFloat(multiple)
-	v, _ := aDecimal.Mul(bDecimal).Truncate(precision).Float64()
-	return v
+	return aDecimal.Mul(bDecimal).Round(precision).InexactFloat64()
 }
 
 // Add 小数相加
@@ -79,8 +91,7 @@ func Mul(money float64, multiple float64, precision int32) float64 {
 func Add(money float64, money2 float64, precision int32) float64 {
 	aDecimal := decimal.NewFromFloat(money)
 	bDecimal := decimal.NewFromFloat(money2)
-	v, _ := aDecimal.Add(bDecimal).Truncate(precision).Float64()
-	return v
+	return aDecimal.Add(bDecimal).Round(precision).InexactFloat64()
 }
 
 // Sub 小数相减
@@ -90,8 +101,7 @@ func Add(money float64, money2 float64, precision int32) float64 {
 func Sub(money float64, money2 float64, precision int32) float64 {
 	aDecimal := decimal.NewFromFloat(money)
 	bDecimal := decimal.NewFromFloat(money2)
-	v, _ := aDecimal.Sub(bDecimal).Truncate(precision).Float64()
-	return v
+	return aDecimal.Sub(bDecimal).Round(precision).InexactFloat64()
 }
 
 // Div 小数相除
@@ -101,6 +111,5 @@ func Sub(money float64, money2 float64, precision int32) float64 {
 func Div(money float64, money2 float64, precision int32) float64 {
 	aDecimal := decimal.NewFromFloat(money)
 	bDecimal := decimal.NewFromFloat(money2)
-	v, _ := aDecimal.Div(bDecimal).Truncate(precision).Float64()
-	return v
+	return aDecimal.Div(bDecimal).Round(precision).InexactFloat64()
 }

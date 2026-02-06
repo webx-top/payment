@@ -8,7 +8,7 @@ import (
 
 // MoneyFeeToString 支付宝金额转字符串
 func MoneyFeeToString(moneyFee float64) string {
-	return payment.CutFloat(moneyFee, 2)
+	return payment.RoundFloat(moneyFee, 2)
 }
 
 func (a *Paypal) VerifySign(ctx echo.Context) error {
