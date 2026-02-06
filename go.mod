@@ -6,7 +6,7 @@ require (
 	github.com/admpub/alipay/v3 v3.2.28
 	github.com/admpub/collate v1.2.0
 	github.com/admpub/decimal v1.3.2
-	github.com/admpub/log v1.4.0
+	github.com/admpub/log v1.5.2
 	github.com/admpub/mugglepay v0.0.8
 	github.com/admpub/resty/v2 v2.7.3
 	github.com/objcoding/wxpay v1.0.6
@@ -14,7 +14,7 @@ require (
 	github.com/smartwalle/paypal v1.0.2
 	github.com/webx-top/codec v0.3.0
 	github.com/webx-top/com v1.4.1
-	github.com/webx-top/echo v1.22.19
+	github.com/webx-top/echo v1.22.29
 	github.com/webx-top/restyclient v0.0.6
 )
 
@@ -26,7 +26,7 @@ require (
 	github.com/admpub/go-isatty v0.0.11 // indirect
 	github.com/admpub/go-reuseport v0.5.0 // indirect
 	github.com/admpub/humanize v0.0.0-20190501023926-5f826e92c8ca // indirect
-	github.com/admpub/once v0.0.1 // indirect
+	github.com/admpub/once v0.0.2 // indirect
 	github.com/admpub/realip v0.2.7 // indirect
 	github.com/admpub/timeago v1.3.0 // indirect
 	github.com/admpub/xencoding v0.0.3 // indirect
@@ -52,10 +52,10 @@ require (
 	github.com/webx-top/poolx v0.0.0-20210912044716-5cfa2d58e380 // indirect
 	github.com/webx-top/tagfast v0.0.1 // indirect
 	github.com/webx-top/validation v0.0.3 // indirect
-	golang.org/x/crypto v0.46.0 // indirect
-	golang.org/x/net v0.48.0 // indirect
+	golang.org/x/crypto v0.47.0 // indirect
+	golang.org/x/net v0.49.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
-	golang.org/x/text v0.32.0 // indirect
+	golang.org/x/sys v0.40.0 // indirect
+	golang.org/x/text v0.33.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
