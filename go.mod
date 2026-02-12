@@ -14,7 +14,7 @@ require (
 	github.com/smartwalle/paypal v1.0.2
 	github.com/webx-top/codec v0.3.0
 	github.com/webx-top/com v1.4.1
-	github.com/webx-top/echo v1.22.29
+	github.com/webx-top/echo v1.23.1
 	github.com/webx-top/restyclient v0.0.6
 )
 
@@ -52,10 +52,10 @@ require (
 	github.com/webx-top/poolx v0.0.0-20210912044716-5cfa2d58e380 // indirect
 	github.com/webx-top/tagfast v0.0.1 // indirect
 	github.com/webx-top/validation v0.0.3 // indirect
-	golang.org/x/crypto v0.47.0 // indirect
-	golang.org/x/net v0.49.0 // indirect
+	golang.org/x/crypto v0.48.0 // indirect
+	golang.org/x/net v0.50.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/sys v0.40.0 // indirect
-	golang.org/x/text v0.33.0 // indirect
+	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/text v0.34.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
