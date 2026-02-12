@@ -1,6 +1,7 @@
 package alipay
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 
@@ -12,19 +13,19 @@ import (
 )
 
 func (a *Alipay) VerifySign(ctx echo.Context) error {
-	return a.verifySign(ctx.Forms())
+	return a.verifySign(ctx, ctx.Forms())
 }
 
-func (a *Alipay) verifySign(req url.Values) error {
-	err := a.Client().VerifySign(req)
+func (a *Alipay) verifySign(ctx context.Context, req url.Values) error {
+	err := a.Client().VerifySign(ctx, req)
 	if err != nil {
 		return fmt.Errorf(`%w: %v`, config.ErrSignature, err)
 	}
 	return nil
 }
 
-func (a *Alipay) getAlipayTradeNotification(req url.Values) (*alipay.TradeNotification, error) {
-	err := a.verifySign(req)
+func (a *Alipay) getAlipayTradeNotification(ctx context.Context, req url.Values) (*alipay.TradeNotification, error) {
+	err := a.verifySign(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -65,8 +66,8 @@ func (a *Alipay) getAlipayTradeNotification(req url.Values) (*alipay.TradeNotifi
 	return noti, nil
 }
 
-func (a *Alipay) getAlipayTradeNotificationData(req url.Values) (param.StringMap, error) {
-	err := a.verifySign(req)
+func (a *Alipay) getAlipayTradeNotificationData(ctx context.Context, req url.Values) (param.StringMap, error) {
+	err := a.verifySign(ctx, req)
 	if err != nil {
 		return nil, err
 	}

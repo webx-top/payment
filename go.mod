@@ -3,7 +3,7 @@ module github.com/webx-top/payment
 go 1.25.1
 
 require (
-	github.com/admpub/alipay/v3 v3.2.28
+	github.com/admpub/alipay/v3 v3.3.0
 	github.com/admpub/collate v1.2.0
 	github.com/admpub/decimal v1.3.2
 	github.com/admpub/log v1.5.2
@@ -45,7 +45,7 @@ require (
 	github.com/onsi/gomega v1.19.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/smartwalle/ncrypto v1.0.4 // indirect
-	github.com/smartwalle/ngx v1.0.12 // indirect
+	github.com/smartwalle/ngx v1.1.0 // indirect
 	github.com/smartwalle/nsign v1.0.9 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/webx-top/captcha v0.1.0 // indirect

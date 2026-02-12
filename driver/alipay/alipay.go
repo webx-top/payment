@@ -153,7 +153,7 @@ func (a *Alipay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, er
 
 func (a *Alipay) PayNotify(ctx echo.Context) error {
 	formData := url.Values(ctx.Forms())
-	notify, err := a.getAlipayTradeNotificationData(formData)
+	notify, err := a.getAlipayTradeNotificationData(ctx, formData)
 	if err != nil {
 		return err
 	}
@@ -259,7 +259,7 @@ func (a *Alipay) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, e
 
 func (a *Alipay) RefundNotify(ctx echo.Context) error {
 	formData := url.Values(ctx.Forms())
-	notify, err := a.getAlipayTradeNotificationData(formData)
+	notify, err := a.getAlipayTradeNotificationData(ctx, formData)
 	if err != nil {
 		return err
 	}
