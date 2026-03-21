@@ -7,13 +7,11 @@ import (
 	"time"
 
 	"github.com/admpub/log"
-	"github.com/admpub/resty/v2"
 	"github.com/webx-top/com"
 	"github.com/webx-top/echo"
 	"github.com/webx-top/echo/param"
 	"github.com/webx-top/payment"
 	"github.com/webx-top/payment/config"
-	"github.com/webx-top/restyclient"
 )
 
 const Name = `mockpay`
@@ -53,27 +51,6 @@ func (a *Mockpay) SetAccount(account *config.Account) payment.Driver {
 	return a
 }
 
-func (a *Mockpay) callbackClient() *resty.Request {
-	return restyclient.Retryable()
-}
-
-func (a *Mockpay) VerifySign(ctx echo.Context) error {
-	log.Infof(`[Mockpay] VerifySign Form Data: %s`, com.Dump(ctx.Forms(), false))
-	return config.ErrUnsupported
-}
-
-// name: queryStatus / noticeStatus / supportDevices / noticeDelay
-func (a *Mockpay) getOptionValue(name string, cfg *config.Pay) string {
-	var optionValue string
-	if a.account.Options.Extra != nil {
-		optionValue = a.account.Options.Extra.String(name)
-	}
-	if len(optionValue) == 0 && cfg != nil && cfg.Options != nil {
-		optionValue = cfg.Options.String(name)
-	}
-	return optionValue
-}
-
 func (a *Mockpay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, error) {
 	device := cfg.Device.String()
 	if len(device) > 0 {
@@ -93,68 +70,6 @@ func (a *Mockpay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, e
 	}
 	err = a.delaySubmitPayNotice(*a.account, *cfg, tradeNo)
 	return result, err
-}
-
-func (a *Mockpay) delaySubmitPayNotice(account config.Account, cfg config.Pay, tradeNo string) error {
-	err := setCachedData(`pay.`+tradeNo, GatewayPayData{
-		TradeNo:     tradeNo,
-		TotalAmount: cfg.Amount,
-		Currency:    cfg.Currency.String(),
-		Config:      cfg,
-	})
-	if err != nil {
-		return err
-	}
-	var delay time.Duration
-	delay, err = a.getNoticeDelay()
-	if err != nil {
-		return err
-	}
-	go func() {
-		time.Sleep(delay)
-		err := a.submitPayNotice(account, cfg, tradeNo)
-		if err != nil {
-			log.Error(err)
-		} else {
-			log.Okay(`[Mockpay] succeed in submitPayNotice`)
-		}
-	}()
-	return err
-}
-
-func (a *Mockpay) SubmitPayNotice(tradeNo string) error {
-	data, err := getCachedPayData(`pay.` + tradeNo)
-	if err != nil {
-		return err
-	}
-	return a.submitPayNotice(*a.account, data.Config, data.TradeNo)
-}
-
-func (a *Mockpay) submitPayNotice(account config.Account, cfg config.Pay, tradeNo string) error {
-	noticeStatus := a.getOptionValue(`noticeStatus`, nil)
-	if len(noticeStatus) == 0 {
-		noticeStatus = config.TradeStatusSuccess
-	}
-	data := url.Values{
-		`status`:          []string{noticeStatus},
-		`trade_no`:        []string{tradeNo},
-		`out_trade_no`:    []string{cfg.OutTradeNo},
-		`passback_params`: []string{cfg.PassbackParams},
-		`total_amount`:    []string{payment.CutFloat(cfg.Amount, 2)},
-		`reason`:          []string{``},
-	}
-	data.Set(`hash`, GenerateHash(data, account.AppSecret))
-	response, err := a.callbackClient().Post(cfg.NotifyURL)
-	if err != nil {
-		return err
-	}
-	if response.IsError() {
-		return fmt.Errorf(`[Mockpay] failed to submitPayNotice: %s`, response.String())
-	}
-	if response.String() != `success` {
-		return fmt.Errorf(`[Mockpay] succeed in submitPayNotice, but the response to the result is not the desired "success": %s`, response.String())
-	}
-	return err
 }
 
 func (a *Mockpay) PayNotify(ctx echo.Context) error {
@@ -224,81 +139,6 @@ func (a *Mockpay) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, 
 		RefundFee:   cfg.RefundAmount,
 		OutRefundNo: cfg.OutRefundNo,
 	}, err
-}
-
-func (a *Mockpay) getNoticeDelay() (delay time.Duration, err error) {
-	v := a.getOptionValue(`noticeDelay`, nil)
-	if len(v) > 0 {
-		delay, err = time.ParseDuration(v)
-	} else {
-		delay = 2 * time.Second
-	}
-	return
-}
-
-func (a *Mockpay) delaySubmitRefundNotice(account config.Account, cfg config.Refund, refundNo string) error {
-	err := setCachedData(`refund.`+refundNo, GatewayRefundData{
-		RefundNo:    refundNo,
-		TotalAmount: cfg.TotalAmount,
-		RefundFee:   cfg.RefundAmount,
-		Currency:    cfg.Currency.String(),
-		Config:      cfg,
-	})
-	if err != nil {
-		return err
-	}
-	var delay time.Duration
-	delay, err = a.getNoticeDelay()
-	if err != nil {
-		return err
-	}
-	go func() {
-		time.Sleep(delay)
-		err := a.submitRefundNotice(account, cfg, refundNo)
-		if err != nil {
-			log.Error(err)
-		} else {
-			log.Okay(`[Mockpay] succeed in submitRefundNotice`)
-		}
-	}()
-	return err
-}
-
-func (a *Mockpay) SubmitRefundNotice(refundNo string) error {
-	data, err := getCachedRefundData(`refund.` + refundNo)
-	if err != nil {
-		return err
-	}
-	return a.submitRefundNotice(*a.account, data.Config, data.RefundNo)
-}
-
-func (a *Mockpay) submitRefundNotice(account config.Account, cfg config.Refund, refundNo string) error {
-	noticeStatus := a.getOptionValue(`noticeStatus`, nil)
-	if len(noticeStatus) == 0 {
-		noticeStatus = config.TradeStatusSuccess
-	}
-	data := url.Values{
-		`status`:        []string{noticeStatus},
-		`trade_no`:      []string{cfg.TradeNo},
-		`out_trade_no`:  []string{cfg.OutTradeNo},
-		`out_refund_no`: []string{cfg.OutRefundNo},
-		`refund_no`:     []string{refundNo},
-		`refund_fee`:    []string{payment.CutFloat(cfg.RefundAmount, 2)},
-		`currency`:      []string{cfg.Currency.String()},
-		`reason`:        []string{cfg.RefundReason},
-	}
-	data.Set(`hash`, GenerateHash(data, account.AppSecret))
-	response, err := a.callbackClient().Post(cfg.NotifyURL)
-	if err != nil {
-		return err
-	}
-	if response.IsError() {
-		return fmt.Errorf(`[Mockpay] failed to submitRefundNotice: %s`, response.String())
-	}
-	if response.String() != `success` {
-		return fmt.Errorf(`[Mockpay] succeed in submitRefundNotice, but the response to the result is not the desired "success": %s`, response.String())
-	}
-	return err
 }
 
 func (a *Mockpay) RefundNotify(ctx echo.Context) error {

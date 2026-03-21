@@ -2,6 +2,7 @@ package mockpay
 
 import (
 	"runtime"
+	"sync"
 	"time"
 
 	"github.com/admpub/go-ttlmap"
@@ -24,10 +25,13 @@ type GatewayRefundData struct {
 }
 
 var defaultMaxAge = time.Hour * 24
+var cackedKeys = sync.Map{}
 var cachedData = ttlmap.New(&ttlmap.Options{
 	InitialCapacity: 100,
 	OnWillExpire:    nil,
-	OnWillEvict:     nil,
+	OnWillEvict: func(key string, item ttlmap.Item) {
+		cackedKeys.Delete(key)
+	},
 })
 
 func init() {
@@ -56,10 +60,15 @@ func getCachedRefundData(key string) (data GatewayRefundData, err error) {
 }
 
 func setCachedData(key string, val interface{}) error {
+	cackedKeys.Store(key, struct{}{})
 	return cachedData.Set(key, ttlmap.NewItem(val, ttlmap.WithTTL(defaultMaxAge)), nil)
 }
 
 func deleteCachedData(key string) (err error) {
 	_, err = cachedData.Delete(key)
+	if err != nil {
+		return
+	}
+	cackedKeys.Delete(key)
 	return
 }

@@ -5,8 +5,34 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/admpub/log"
+	"github.com/admpub/resty/v2"
 	"github.com/webx-top/com"
+	"github.com/webx-top/echo"
+	"github.com/webx-top/payment/config"
+	"github.com/webx-top/restyclient"
 )
+
+func (a *Mockpay) callbackClient() *resty.Request {
+	return restyclient.Retryable()
+}
+
+func (a *Mockpay) VerifySign(ctx echo.Context) error {
+	log.Infof(`[Mockpay] VerifySign Form Data: %s`, com.Dump(ctx.Forms(), false))
+	return config.ErrUnsupported
+}
+
+// name: queryStatus / noticeStatus / supportDevices / noticeDelay
+func (a *Mockpay) getOptionValue(name string, cfg *config.Pay) string {
+	var optionValue string
+	if a.account.Options.Extra != nil {
+		optionValue = a.account.Options.Extra.String(name)
+	}
+	if len(optionValue) == 0 && cfg != nil && cfg.Options != nil {
+		optionValue = cfg.Options.String(name)
+	}
+	return optionValue
+}
 
 func GenerateHash(data url.Values, secret string) string {
 	data.Del(`hash`)
