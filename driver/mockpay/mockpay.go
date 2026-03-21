@@ -62,7 +62,7 @@ func (a *Mockpay) VerifySign(ctx echo.Context) error {
 	return config.ErrUnsupported
 }
 
-// name: queryStatus / supportDevices / noticeDelay
+// name: queryStatus / noticeStatus / supportDevices / noticeDelay
 func (a *Mockpay) getOptionValue(name string, cfg *config.Pay) string {
 	var optionValue string
 	if a.account.Options.Extra != nil {
