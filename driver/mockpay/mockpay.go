@@ -62,6 +62,7 @@ func (a *Mockpay) VerifySign(ctx echo.Context) error {
 	return config.ErrUnsupported
 }
 
+// name: queryStatus / supportDevices / noticeDelay
 func (a *Mockpay) getOptionValue(name string, cfg *config.Pay) string {
 	var optionValue string
 	if a.account.Options.Extra != nil {
@@ -121,8 +122,12 @@ func (a *Mockpay) delaySubmitPayNotice(account config.Account, cfg config.Pay, t
 }
 
 func (a *Mockpay) submitPayNotice(account config.Account, cfg config.Pay, tradeNo string) error {
+	noticeStatus := a.getOptionValue(`noticeStatus`, nil)
+	if len(noticeStatus) == 0 {
+		noticeStatus = config.TradeStatusSuccess
+	}
 	data := url.Values{
-		`status`:          []string{config.TradeStatusSuccess},
+		`status`:          []string{noticeStatus},
 		`trade_no`:        []string{tradeNo},
 		`out_trade_no`:    []string{cfg.OutTradeNo},
 		`passback_params`: []string{cfg.PassbackParams},
@@ -250,8 +255,12 @@ func (a *Mockpay) delaySubmitRefundNotice(account config.Account, cfg config.Ref
 }
 
 func (a *Mockpay) submitRefundNotice(account config.Account, cfg config.Refund, refundNo string) error {
+	noticeStatus := a.getOptionValue(`noticeStatus`, nil)
+	if len(noticeStatus) == 0 {
+		noticeStatus = config.TradeStatusSuccess
+	}
 	data := url.Values{
-		`status`:        []string{config.TradeStatusSuccess},
+		`status`:        []string{noticeStatus},
 		`trade_no`:      []string{cfg.TradeNo},
 		`out_trade_no`:  []string{cfg.OutTradeNo},
 		`out_refund_no`: []string{cfg.OutRefundNo},
