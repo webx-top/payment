@@ -5,12 +5,14 @@ import (
 	"time"
 
 	"github.com/admpub/go-ttlmap"
+	"github.com/webx-top/payment/config"
 )
 
 type GatewayPayData struct {
 	TradeNo     string
 	Currency    string
 	TotalAmount float64
+	Config      config.Pay
 }
 
 type GatewayRefundData struct {
@@ -18,6 +20,7 @@ type GatewayRefundData struct {
 	TotalAmount float64
 	RefundFee   float64
 	Currency    string
+	Config      config.Refund
 }
 
 var defaultMaxAge = time.Hour * 24

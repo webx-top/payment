@@ -100,6 +100,7 @@ func (a *Mockpay) delaySubmitPayNotice(account config.Account, cfg config.Pay, t
 		TradeNo:     tradeNo,
 		TotalAmount: cfg.Amount,
 		Currency:    cfg.Currency.String(),
+		Config:      cfg,
 	})
 	if err != nil {
 		return err
@@ -119,6 +120,14 @@ func (a *Mockpay) delaySubmitPayNotice(account config.Account, cfg config.Pay, t
 		}
 	}()
 	return err
+}
+
+func (a *Mockpay) SubmitPayNotice(tradeNo string) error {
+	data, err := getCachedPayData(`pay.` + tradeNo)
+	if err != nil {
+		return err
+	}
+	return a.submitPayNotice(*a.account, data.Config, data.TradeNo)
 }
 
 func (a *Mockpay) submitPayNotice(account config.Account, cfg config.Pay, tradeNo string) error {
@@ -233,6 +242,7 @@ func (a *Mockpay) delaySubmitRefundNotice(account config.Account, cfg config.Ref
 		TotalAmount: cfg.TotalAmount,
 		RefundFee:   cfg.RefundAmount,
 		Currency:    cfg.Currency.String(),
+		Config:      cfg,
 	})
 	if err != nil {
 		return err
@@ -252,6 +262,14 @@ func (a *Mockpay) delaySubmitRefundNotice(account config.Account, cfg config.Ref
 		}
 	}()
 	return err
+}
+
+func (a *Mockpay) SubmitRefundNotice(refundNo string) error {
+	data, err := getCachedRefundData(`refund.` + refundNo)
+	if err != nil {
+		return err
+	}
+	return a.submitRefundNotice(*a.account, data.Config, data.RefundNo)
 }
 
 func (a *Mockpay) submitRefundNotice(account config.Account, cfg config.Refund, refundNo string) error {
