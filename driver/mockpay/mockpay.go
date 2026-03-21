@@ -74,12 +74,15 @@ func (a *Mockpay) getOptionValue(name string, cfg *config.Pay) string {
 }
 
 func (a *Mockpay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, error) {
-	var supportDevices []string
-	if optionValue := a.getOptionValue(`supportDevices`, cfg); len(optionValue) > 0 {
-		supportDevices = strings.Split(optionValue, `,`)
-	}
-	if !com.InSlice(cfg.Device.String(), supportDevices) {
-		return nil, config.ErrUnknownDevice
+	device := cfg.Device.String()
+	if len(device) > 0 {
+		var supportDevices []string
+		if optionValue := a.getOptionValue(`supportDevices`, cfg); len(optionValue) > 0 {
+			supportDevices = strings.Split(optionValue, `,`)
+		}
+		if len(supportDevices) > 0 && !com.InSlice(device, supportDevices) {
+			return nil, config.ErrUnknownDevice
+		}
 	}
 	tradeNo := fmt.Sprintf(`MOCKPAY%d%s`, time.Now().UnixMilli(), com.RandomAlphanumeric(5))
 	var err error
@@ -174,9 +177,16 @@ func (a *Mockpay) PayNotify(ctx echo.Context) error {
 
 func (a *Mockpay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result, error) {
 	data, err := getCachedPayData(`pay.` + cfg.TradeNo)
+	if err != nil {
+		return nil, err
+	}
+	queryStatus := a.getOptionValue(`queryStatus`, nil)
+	if len(queryStatus) == 0 {
+		queryStatus = config.TradeStatusSuccess
+	}
 	return &config.Result{
 		Operation:   config.OperationPayment,
-		Status:      config.TradeStatusSuccess,
+		Status:      queryStatus,
 		TradeNo:     cfg.TradeNo,
 		OutTradeNo:  cfg.OutTradeNo,
 		Currency:    data.Currency,
@@ -301,12 +311,19 @@ func (a *Mockpay) RefundNotify(ctx echo.Context) error {
 
 func (a *Mockpay) RefundQuery(ctx echo.Context, cfg *config.Query) (*config.Result, error) {
 	data, err := getCachedRefundData(`refund.` + cfg.RefundNo)
+	if err != nil {
+		return nil, err
+	}
+	queryStatus := a.getOptionValue(`queryStatus`, nil)
+	if len(queryStatus) == 0 {
+		queryStatus = config.TradeStatusSuccess
+	}
 	return &config.Result{
 		Operation:   config.OperationRefund,
-		Status:      config.TradeStatusSuccess,
+		Status:      queryStatus,
 		TradeNo:     cfg.TradeNo,
 		OutTradeNo:  cfg.OutTradeNo,
-		Currency:    ``,
+		Currency:    data.Currency,
 		TotalAmount: data.TotalAmount,
 		Reason:      ``,
 		RefundFee:   data.RefundFee,
