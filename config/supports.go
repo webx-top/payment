@@ -1,5 +1,7 @@
 package config
 
+import "slices"
+
 type Support int
 
 const (
@@ -13,10 +15,5 @@ const (
 type Supports []Support
 
 func (a Supports) IsSupported(s Support) bool {
-	for _, v := range a {
-		if v == s {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(a, s)
 }
