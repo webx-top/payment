@@ -22,7 +22,7 @@ var supports = config.Supports{
 }
 
 func init() {
-	payment.Register(Name, `麻瓜宝`, New)
+	payment.Register(Name, echo.T(`麻瓜宝`), New)
 }
 
 func New() payment.Driver {

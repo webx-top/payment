@@ -26,7 +26,7 @@ var supports = config.Supports{
 }
 
 func init() {
-	payment.Register(Name, `支付宝`, New)
+	payment.Register(Name, echo.T(`支付宝`), New)
 }
 
 func New() payment.Driver {
@@ -167,7 +167,7 @@ func (a *Alipay) PayNotify(ctx echo.Context) error {
 			OutTradeNo:     notify.String(`out_trade_no`),
 			PassbackParams: notify.String(`passback_params`),
 			Currency:       ``,
-			TotalAmount:    param.AsFloat64(notify.Float64(`total_amount`)),
+			TotalAmount:    notify.Float64(`total_amount`),
 			Reason:         notify.String(`reason`),
 			Raw:            notify,
 		}
@@ -273,7 +273,7 @@ func (a *Alipay) RefundNotify(ctx echo.Context) error {
 			TradeNo:     notify.String(`trade_no`),
 			OutTradeNo:  notify.String(`out_trade_no`),
 			Currency:    ``,
-			TotalAmount: param.AsFloat64(notify.Float64(`total_amount`)),
+			TotalAmount: notify.Float64(`total_amount`),
 			Reason:      notify.String(`reason`),
 			RefundFee:   notify.Float64(`refund_fee`),
 			OutRefundNo: notify.String(`out_biz_no`),

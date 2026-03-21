@@ -32,22 +32,22 @@ var supports = config.Supports{
 }
 
 func init() {
-	payment.Register(Name, `虎皮椒支付`, New, SetDefaults)
+	payment.Register(Name, echo.T(`虎皮椒支付`), New, SetDefaults)
 }
 
 func SetDefaults(a *config.Account) {
 	if a.Subtype == nil {
 		a.Subtype = config.NewSubtype(
-			`支付类型`,
+			echo.T(`支付类型`),
 		)
 	}
 	if len(a.Subtype.Options) == 0 {
 		a.Subtype.Add(
 			&config.SubtypeOption{
-				Value: `alipay`, Text: `支付宝付款`, Checked: true,
+				Value: `alipay`, Text: echo.T(`支付宝付款`), Checked: true,
 			},
 			&config.SubtypeOption{
-				Value: `wechat`, Text: `微信付款`,
+				Value: `wechat`, Text: echo.T(`微信付款`),
 			},
 		)
 	}

@@ -27,7 +27,7 @@ var supports = config.Supports{
 }
 
 func init() {
-	payment.Register(Name, `微信支付`, New)
+	payment.Register(Name, echo.T(`微信支付`), New)
 }
 
 func New() payment.Driver {

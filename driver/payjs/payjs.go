@@ -20,7 +20,7 @@ var supports = config.Supports{
 }
 
 func init() {
-	payment.Register(Name, `PayJS支付`, New)
+	payment.Register(Name, echo.T(`PayJS支付`), New)
 }
 
 func New() payment.Driver {
