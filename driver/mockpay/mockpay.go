@@ -65,8 +65,9 @@ func (a *Mockpay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, e
 	tradeNo := fmt.Sprintf(`MOCKPAY%d%s`, time.Now().UnixMilli(), com.RandomAlphanumeric(5))
 	var err error
 	result := &config.PayResponse{
-		TradeNo: tradeNo,
-		Params:  echo.H{},
+		TradeNo:     tradeNo,
+		RedirectURL: cfg.ReturnURL,
+		Params:      echo.H{},
 	}
 	err = a.delaySubmitPayNotice(*a.account, *cfg, tradeNo)
 	return result, err
