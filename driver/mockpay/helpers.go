@@ -24,3 +24,8 @@ func GenerateHash(data url.Values, secret string) string {
 	}
 	return com.Md5(strings.Join(kv, `&`) + secret)
 }
+
+type ManualNotice interface {
+	SubmitPayNotice(tradeNo string) error
+	SubmitRefundNotice(refundNo string) error
+}

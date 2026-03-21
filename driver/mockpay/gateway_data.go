@@ -25,7 +25,7 @@ type GatewayRefundData struct {
 
 var defaultMaxAge = time.Hour * 24
 var cachedData = ttlmap.New(&ttlmap.Options{
-	InitialCapacity: 15,
+	InitialCapacity: 100,
 	OnWillExpire:    nil,
 	OnWillEvict:     nil,
 })
