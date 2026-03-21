@@ -64,11 +64,16 @@ func setCachedData(key string, val interface{}) error {
 	return cachedData.Set(key, ttlmap.NewItem(val, ttlmap.WithTTL(defaultMaxAge)), nil)
 }
 
-func deleteCachedData(key string) (err error) {
-	_, err = cachedData.Delete(key)
-	if err != nil {
-		return
-	}
+func DeleteCachedKey(key string) {
+	cachedData.Delete(key)
 	cackedKeys.Delete(key)
-	return
+}
+
+func GetAllCachedKeys() []string {
+	var keys []string
+	cackedKeys.Range(func(key, value interface{}) bool {
+		keys = append(keys, key.(string))
+		return true
+	})
+	return keys
 }
