@@ -71,7 +71,7 @@ func (a *Mockpay) submitPayNotice(account config.Account, cfg config.Pay, tradeN
 		`reason`:          []string{``},
 	}
 	data.Set(`hash`, GenerateHash(data, account.AppSecret))
-	response, err := a.callbackClient().Post(cfg.NotifyURL)
+	response, err := a.callbackClient().SetFormDataFromValues(data).Post(cfg.NotifyURL)
 	if err != nil {
 		return err
 	}
@@ -137,7 +137,7 @@ func (a *Mockpay) submitRefundNotice(account config.Account, cfg config.Refund, 
 		`reason`:        []string{cfg.RefundReason},
 	}
 	data.Set(`hash`, GenerateHash(data, account.AppSecret))
-	response, err := a.callbackClient().Post(cfg.NotifyURL)
+	response, err := a.callbackClient().SetFormDataFromValues(data).Post(cfg.NotifyURL)
 	if err != nil {
 		return err
 	}
