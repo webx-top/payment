@@ -122,11 +122,6 @@ func (a *Mockpay) delaySubmitPayNotice(account config.Account, cfg config.Pay, t
 	return err
 }
 
-type ManualNotice interface {
-	SubmitPayNotice(tradeNo string) error
-	SubmitRefundNotice(refundNo string) error
-}
-
 func (a *Mockpay) SubmitPayNotice(tradeNo string) error {
 	data, err := getCachedPayData(`pay.` + tradeNo)
 	if err != nil {
