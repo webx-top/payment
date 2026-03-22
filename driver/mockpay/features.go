@@ -20,3 +20,14 @@ var DisableableFeatures = []map[string]string{
 	{`id`: config.SupportRefundQuery.String(), `text`: echo.T(`查询退款结果`)},
 	{`id`: config.SupportRefundNotify.String(), `text`: echo.T(`退款结果通知`)},
 }
+
+func GetDisableableFeatures(ctx echo.Context) []map[string]string {
+	smaps := make([]map[string]string, len(DisableableFeatures))
+	for index, smap := range DisableableFeatures {
+		smaps[index] = map[string]string{
+			`id`:   smap[`id`],
+			`text`: ctx.T(smap[`text`]),
+		}
+	}
+	return smaps
+}
