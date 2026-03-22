@@ -2,6 +2,7 @@ package mockpay
 
 import (
 	"net/url"
+	"slices"
 	"sort"
 	"strings"
 
@@ -22,7 +23,7 @@ func (a *Mockpay) VerifySign(ctx echo.Context) error {
 	return config.ErrUnsupported
 }
 
-// name: queryStatus / noticeStatus / supportDevices / noticeDelay
+// name: queryStatus / noticeStatus / supportDevices / noticeDelay / disableFeatures
 func (a *Mockpay) getOptionValue(name string, cfg *config.Pay) string {
 	var optionValue string
 	if a.account.Options.Extra != nil {
@@ -32,6 +33,26 @@ func (a *Mockpay) getOptionValue(name string, cfg *config.Pay) string {
 		optionValue = cfg.Options.String(name)
 	}
 	return optionValue
+}
+
+func (a *Mockpay) getFeatures() config.Supports {
+	if a.features != nil {
+		return a.features
+	}
+	v := a.getOptionValue(`disableFeatures`, nil)
+	if len(v) == 0 {
+		return supports
+	}
+	disableFeatures := strings.Split(v, `,`)
+	features := config.Supports{}
+	for _, feature := range supports {
+		if slices.Contains(disableFeatures, feature.String()) {
+			continue
+		}
+		features = append(features, feature)
+	}
+	a.features = features
+	return features
 }
 
 func GenerateHash(data url.Values, secret string) string {

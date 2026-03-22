@@ -31,6 +31,9 @@ func (a *Mockpay) delaySubmitPayNotice(account config.Account, cfg config.Pay, t
 	if err != nil {
 		return err
 	}
+	if !a.IsSupported(config.SupportPayNotify) {
+		return err
+	}
 	var delay time.Duration
 	delay, err = a.getNoticeDelay()
 	if err != nil {
@@ -49,6 +52,9 @@ func (a *Mockpay) delaySubmitPayNotice(account config.Account, cfg config.Pay, t
 }
 
 func (a *Mockpay) SubmitPayNotice(tradeNo string) error {
+	if !a.IsSupported(config.SupportPayNotify) {
+		return config.ErrUnsupported
+	}
 	tradeNo = strings.TrimPrefix(tradeNo, `pay.`)
 	data, err := getCachedPayData(`pay.` + tradeNo)
 	if err != nil {
@@ -95,6 +101,9 @@ func (a *Mockpay) delaySubmitRefundNotice(account config.Account, cfg config.Ref
 	if err != nil {
 		return err
 	}
+	if !a.IsSupported(config.SupportRefundNotify) {
+		return err
+	}
 	var delay time.Duration
 	delay, err = a.getNoticeDelay()
 	if err != nil {
@@ -113,6 +122,9 @@ func (a *Mockpay) delaySubmitRefundNotice(account config.Account, cfg config.Ref
 }
 
 func (a *Mockpay) SubmitRefundNotice(refundNo string) error {
+	if !a.IsSupported(config.SupportRefundNotify) {
+		return config.ErrUnsupported
+	}
 	refundNo = strings.TrimPrefix(refundNo, `refund.`)
 	data, err := getCachedRefundData(`refund.` + refundNo)
 	if err != nil {

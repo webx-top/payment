@@ -2,6 +2,7 @@ package mockpay
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -16,14 +17,6 @@ import (
 
 const Name = `mockpay`
 
-var supports = config.Supports{
-	config.SupportPayNotify,
-	config.SupportPayQuery,
-	config.SupportRefund,
-	config.SupportRefundNotify,
-	config.SupportRefundQuery,
-}
-
 func init() {
 	payment.Register(Name, echo.T(`模拟支付`), New)
 }
@@ -35,10 +28,11 @@ func New() payment.Driver {
 type Mockpay struct {
 	account        *config.Account
 	notifyCallback func(echo.Context) error
+	features       config.Supports
 }
 
 func (a *Mockpay) IsSupported(s config.Support) bool {
-	return supports.IsSupported(s)
+	return a.getFeatures().IsSupported(s)
 }
 
 func (a *Mockpay) SetNotifyCallback(callback func(echo.Context) error) payment.Driver {
@@ -74,6 +68,9 @@ func (a *Mockpay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, e
 }
 
 func (a *Mockpay) PayNotify(ctx echo.Context) error {
+	if !a.IsSupported(config.SupportPayNotify) {
+		return ctx.String(config.ErrUnsupported.Error(), http.StatusNotImplemented)
+	}
 	formData := url.Values(ctx.Forms())
 	status := formData.Get(`status`)
 	formHash := formData.Get(`hash`)
@@ -106,6 +103,9 @@ func (a *Mockpay) PayNotify(ctx echo.Context) error {
 }
 
 func (a *Mockpay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result, error) {
+	if !a.IsSupported(config.SupportPayQuery) {
+		return nil, config.ErrUnsupported
+	}
 	data, err := getCachedPayData(`pay.` + cfg.TradeNo)
 	if err != nil {
 		return nil, err
@@ -126,6 +126,9 @@ func (a *Mockpay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result,
 }
 
 func (a *Mockpay) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, error) {
+	if !a.IsSupported(config.SupportRefund) {
+		return nil, config.ErrUnsupported
+	}
 	refundNo := fmt.Sprintf(`MOCKREFUND%d%s`, time.Now().UnixMilli(), com.RandomAlphanumeric(5))
 	err := a.delaySubmitRefundNotice(*a.account, *cfg, refundNo)
 	return &config.Result{
@@ -143,6 +146,9 @@ func (a *Mockpay) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, 
 }
 
 func (a *Mockpay) RefundNotify(ctx echo.Context) error {
+	if !a.IsSupported(config.SupportRefund) || !a.IsSupported(config.SupportRefundNotify) {
+		return ctx.String(config.ErrUnsupported.Error(), http.StatusNotImplemented)
+	}
 	formData := url.Values(ctx.Forms())
 	status := formData.Get(`status`)
 	formHash := formData.Get(`hash`)
@@ -178,6 +184,9 @@ func (a *Mockpay) RefundNotify(ctx echo.Context) error {
 }
 
 func (a *Mockpay) RefundQuery(ctx echo.Context, cfg *config.Query) (*config.Result, error) {
+	if !a.IsSupported(config.SupportRefund) || !a.IsSupported(config.SupportRefundQuery) {
+		return nil, config.ErrUnsupported
+	}
 	data, err := getCachedRefundData(`refund.` + cfg.RefundNo)
 	if err != nil {
 		return nil, err
