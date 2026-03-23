@@ -46,6 +46,10 @@ func (a *Mockpay) SetAccount(account *config.Account) payment.Driver {
 }
 
 func (a *Mockpay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, error) {
+	delay, err := a.getNoticeDelay()
+	if err != nil {
+		return nil, err
+	}
 	device := cfg.Device.String()
 	if len(device) > 0 {
 		var supportDevices []string
@@ -57,13 +61,15 @@ func (a *Mockpay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, e
 		}
 	}
 	tradeNo := fmt.Sprintf(`MOCKPAY%d%s`, time.Now().UnixMilli(), com.RandomAlphanumeric(5))
-	var err error
 	result := &config.PayResponse{
 		TradeNo:     tradeNo,
 		RedirectURL: cfg.ReturnURL,
 		Params:      echo.H{},
 	}
-	err = a.delaySubmitPayNotice(*a.account, *cfg, tradeNo)
+	if delay > 0 {
+		result.Params.Set(`delay`, uint(delay.Seconds()))
+	}
+	err = a.delaySubmitPayNotice(*a.account, *cfg, tradeNo, delay)
 	return result, err
 }
 

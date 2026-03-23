@@ -21,7 +21,7 @@ func (a *Mockpay) getNoticeDelay() (delay time.Duration, err error) {
 	return
 }
 
-func (a *Mockpay) delaySubmitPayNotice(account config.Account, cfg config.Pay, tradeNo string) error {
+func (a *Mockpay) delaySubmitPayNotice(account config.Account, cfg config.Pay, tradeNo string, delay time.Duration) error {
 	err := setCachedData(`pay.`+tradeNo, GatewayPayData{
 		TradeNo:     tradeNo,
 		TotalAmount: cfg.Amount,
@@ -34,10 +34,8 @@ func (a *Mockpay) delaySubmitPayNotice(account config.Account, cfg config.Pay, t
 	if !a.IsSupported(config.SupportPayNotify) {
 		return err
 	}
-	var delay time.Duration
-	delay, err = a.getNoticeDelay()
-	if err != nil {
-		return err
+	if delay <= 0 {
+		return a.submitPayNotice(account, cfg, tradeNo)
 	}
 	go func() {
 		time.Sleep(delay)
@@ -108,6 +106,9 @@ func (a *Mockpay) delaySubmitRefundNotice(account config.Account, cfg config.Ref
 	delay, err = a.getNoticeDelay()
 	if err != nil {
 		return err
+	}
+	if delay <= 0 {
+		return a.submitRefundNotice(account, cfg, refundNo)
 	}
 	go func() {
 		time.Sleep(delay)
