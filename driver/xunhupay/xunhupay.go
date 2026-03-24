@@ -59,14 +59,14 @@ func New() payment.Driver {
 
 type XunHuPay struct {
 	account        *config.Account
-	notifyCallback func(echo.Context) error
+	notifyCallback payment.NotifyCallback
 }
 
 func (a *XunHuPay) IsSupported(s config.Support) bool {
 	return supports.IsSupported(s)
 }
 
-func (a *XunHuPay) SetNotifyCallback(callback func(echo.Context) error) payment.Driver {
+func (a *XunHuPay) SetNotifyCallback(callback payment.NotifyCallback) payment.Driver {
 	a.notifyCallback = callback
 	return a
 }
@@ -234,8 +234,7 @@ func (a *XunHuPay) PayNotify(ctx echo.Context) error {
 			Reason:         ``,
 			Raw:            formData,
 		}
-		ctx.Set(`notify`, result)
-		if err := a.notifyCallback(ctx); err != nil {
+		if err := a.notifyCallback(ctx, result); err != nil {
 			return ctx.String(err.Error())
 		}
 	}

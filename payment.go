@@ -5,10 +5,12 @@ import (
 	"github.com/webx-top/payment/config"
 )
 
+type NotifyCallback func(echo.Context, *config.Result) error
+
 // Driver 付款驱动接口
 type Driver interface {
 	IsSupported(config.Support) bool
-	SetNotifyCallback(callback func(echo.Context) error) Driver
+	SetNotifyCallback(callback NotifyCallback) Driver
 	SetAccount(*config.Account) Driver
 	Pay(echo.Context, *config.Pay) (*config.PayResponse, error)
 	PayQuery(echo.Context, *config.Query) (*config.Result, error)

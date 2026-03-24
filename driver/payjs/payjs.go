@@ -30,14 +30,14 @@ func New() payment.Driver {
 type PayJS struct {
 	account        *config.Account
 	client         *payjs.PayJS
-	notifyCallback func(echo.Context) error
+	notifyCallback payment.NotifyCallback
 }
 
 func (a *PayJS) IsSupported(s config.Support) bool {
 	return supports.IsSupported(s)
 }
 
-func (a *PayJS) SetNotifyCallback(callback func(echo.Context) error) payment.Driver {
+func (a *PayJS) SetNotifyCallback(callback payment.NotifyCallback) payment.Driver {
 	a.notifyCallback = callback
 	return a
 }
@@ -140,8 +140,7 @@ func (a *PayJS) PayNotify(ctx echo.Context) error {
 				Reason:         ``,
 				Raw:            msg,
 			}
-			ctx.Set(`notify`, result)
-			notifyCallbackErr = a.notifyCallback(ctx)
+			notifyCallbackErr = a.notifyCallback(ctx, result)
 		}
 	})
 

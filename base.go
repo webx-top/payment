@@ -13,14 +13,14 @@ func New() *Base {
 
 type Base struct {
 	Account        *config.Account
-	NotifyCallback func(echo.Context) error
+	NotifyCallback NotifyCallback
 }
 
 func (a *Base) IsSupported(s config.Support) bool {
 	return false
 }
 
-func (a *Base) SetNotifyCallback(callback func(echo.Context) error) Driver {
+func (a *Base) SetNotifyCallback(callback NotifyCallback) Driver {
 	a.NotifyCallback = callback
 	return a
 }

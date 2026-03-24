@@ -38,7 +38,7 @@ func New() payment.Driver {
 
 type EPUSDT struct {
 	account        *config.Account
-	notifyCallback func(echo.Context) error
+	notifyCallback payment.NotifyCallback
 	apiURL         string
 }
 
@@ -46,7 +46,7 @@ func (a *EPUSDT) IsSupported(s config.Support) bool {
 	return supports.IsSupported(s)
 }
 
-func (a *EPUSDT) SetNotifyCallback(callback func(echo.Context) error) payment.Driver {
+func (a *EPUSDT) SetNotifyCallback(callback payment.NotifyCallback) payment.Driver {
 	a.notifyCallback = callback
 	return a
 }
@@ -128,8 +128,7 @@ func (a *EPUSDT) PayNotify(ctx echo.Context) error {
 			Reason:      ``,
 			Raw:         callback,
 		}
-		ctx.Set(`notify`, result)
-		a.notifyCallback(ctx)
+		a.notifyCallback(ctx, result)
 	}
 	return ctx.String(`ok`)
 }

@@ -29,14 +29,14 @@ func New() payment.Driver {
 type Paypal struct {
 	account        *config.Account
 	client         *paypal.Client
-	notifyCallback func(echo.Context) error
+	notifyCallback payment.NotifyCallback
 }
 
 func (a *Paypal) IsSupported(s config.Support) bool {
 	return supports.IsSupported(s)
 }
 
-func (a *Paypal) SetNotifyCallback(callback func(echo.Context) error) payment.Driver {
+func (a *Paypal) SetNotifyCallback(callback payment.NotifyCallback) payment.Driver {
 	a.notifyCallback = callback
 	return a
 }
@@ -181,8 +181,7 @@ func (a *Paypal) PayNotify(ctx echo.Context) error {
 				Reason:                 reason,
 				Raw:                    sale,
 			}
-			ctx.Set(`notify`, result)
-			if err := a.notifyCallback(ctx); err != nil {
+			if err := a.notifyCallback(ctx, result); err != nil {
 				return err
 			}
 		}
@@ -206,8 +205,7 @@ func (a *Paypal) PayNotify(ctx echo.Context) error {
 				OutRefundNo:    ``,
 				Raw:            refund,
 			}
-			ctx.Set(`notify`, result)
-			if err := a.notifyCallback(ctx); err != nil {
+			if err := a.notifyCallback(ctx, result); err != nil {
 				return err
 			}
 		}

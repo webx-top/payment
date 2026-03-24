@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"strings"
 
 	"github.com/objcoding/wxpay"
@@ -37,14 +37,14 @@ func New() payment.Driver {
 type Wechat struct {
 	account        *config.Account
 	client         *wxpay.Client
-	notifyCallback func(echo.Context) error
+	notifyCallback payment.NotifyCallback
 }
 
 func (a *Wechat) IsSupported(s config.Support) bool {
 	return supports.IsSupported(s)
 }
 
-func (a *Wechat) SetNotifyCallback(callback func(echo.Context) error) payment.Driver {
+func (a *Wechat) SetNotifyCallback(callback payment.NotifyCallback) payment.Driver {
 	a.notifyCallback = callback
 	return a
 }
@@ -131,7 +131,7 @@ func (a *Wechat) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, er
 func (a *Wechat) PayNotify(ctx echo.Context) error {
 	body := ctx.Request().Body()
 	defer body.Close()
-	b, err := ioutil.ReadAll(body)
+	b, err := io.ReadAll(body)
 	if err != nil {
 		return err
 	}
@@ -161,8 +161,7 @@ func (a *Wechat) PayNotify(ctx echo.Context) error {
 			Reason:         resp.GetString(`return_msg`),
 			Raw:            resp,
 		}
-		ctx.Set(`notify`, result)
-		if err := a.notifyCallback(ctx); err != nil {
+		if err := a.notifyCallback(ctx, result); err != nil {
 			isSuccess = false
 		}
 	}
@@ -264,7 +263,7 @@ func (a *Wechat) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, e
 func (a *Wechat) RefundNotify(ctx echo.Context) error {
 	body := ctx.Request().Body()
 	defer body.Close()
-	b, err := ioutil.ReadAll(body)
+	b, err := io.ReadAll(body)
 	if err != nil {
 		return err
 	}
@@ -307,8 +306,7 @@ func (a *Wechat) RefundNotify(ctx echo.Context) error {
 			OutRefundNo: resp.GetString(`out_refund_no`),
 			Raw:         resp,
 		}
-		ctx.Set(`notify`, result)
-		if err := a.notifyCallback(ctx); err != nil {
+		if err := a.notifyCallback(ctx, result); err != nil {
 			isSuccess = false
 		}
 	}

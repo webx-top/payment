@@ -32,14 +32,14 @@ func New() payment.Driver {
 type Mugglepay struct {
 	account        *config.Account
 	client         *mugglepay.Mugglepay
-	notifyCallback func(echo.Context) error
+	notifyCallback payment.NotifyCallback
 }
 
 func (a *Mugglepay) IsSupported(s config.Support) bool {
 	return supports.IsSupported(s)
 }
 
-func (a *Mugglepay) SetNotifyCallback(callback func(echo.Context) error) payment.Driver {
+func (a *Mugglepay) SetNotifyCallback(callback payment.NotifyCallback) payment.Driver {
 	a.notifyCallback = callback
 	return a
 }
@@ -121,8 +121,7 @@ func (a *Mugglepay) PayNotify(ctx echo.Context) error {
 			Reason:      ``,
 			Raw:         callback,
 		}
-		ctx.Set(`notify`, result)
-		a.notifyCallback(ctx)
+		a.notifyCallback(ctx, result)
 	}
 	return ctx.JSON(echo.H{`status`: 200})
 }
@@ -207,8 +206,7 @@ func (a *Mugglepay) RefundNotify(ctx echo.Context) error {
 			Reason:      ``,
 			Raw:         callback,
 		}
-		ctx.Set(`notify`, result)
-		a.notifyCallback(ctx)
+		a.notifyCallback(ctx, result)
 	}
 	return ctx.JSON(echo.H{`status`: 200})
 }

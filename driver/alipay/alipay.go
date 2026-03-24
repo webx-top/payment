@@ -36,14 +36,14 @@ func New() payment.Driver {
 type Alipay struct {
 	account        *config.Account
 	client         *alipay.Client
-	notifyCallback func(echo.Context) error
+	notifyCallback payment.NotifyCallback
 }
 
 func (a *Alipay) IsSupported(s config.Support) bool {
 	return supports.IsSupported(s)
 }
 
-func (a *Alipay) SetNotifyCallback(callback func(echo.Context) error) payment.Driver {
+func (a *Alipay) SetNotifyCallback(callback payment.NotifyCallback) payment.Driver {
 	a.notifyCallback = callback
 	return a
 }
@@ -178,8 +178,7 @@ func (a *Alipay) PayNotify(ctx echo.Context) error {
 			result.OutRefundNo = notify.String(`out_biz_no`)
 			result.RefundFee = refundFee
 		}
-		ctx.Set(`notify`, result)
-		if err := a.notifyCallback(ctx); err != nil {
+		if err := a.notifyCallback(ctx, result); err != nil {
 			isSuccess = false
 		}
 	}
@@ -279,8 +278,7 @@ func (a *Alipay) RefundNotify(ctx echo.Context) error {
 			OutRefundNo: notify.String(`out_biz_no`),
 			Raw:         notify,
 		}
-		ctx.Set(`notify`, result)
-		if err := a.notifyCallback(ctx); err != nil {
+		if err := a.notifyCallback(ctx, result); err != nil {
 			log.Error(err)
 			isSuccess = false
 		}

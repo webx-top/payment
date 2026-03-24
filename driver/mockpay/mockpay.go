@@ -27,7 +27,7 @@ func New() payment.Driver {
 
 type Mockpay struct {
 	account        *config.Account
-	notifyCallback func(echo.Context) error
+	notifyCallback payment.NotifyCallback
 	features       config.Supports
 }
 
@@ -35,7 +35,7 @@ func (a *Mockpay) IsSupported(s config.Support) bool {
 	return a.getFeatures().IsSupported(s)
 }
 
-func (a *Mockpay) SetNotifyCallback(callback func(echo.Context) error) payment.Driver {
+func (a *Mockpay) SetNotifyCallback(callback payment.NotifyCallback) payment.Driver {
 	a.notifyCallback = callback
 	return a
 }
@@ -97,8 +97,7 @@ func (a *Mockpay) PayNotify(ctx echo.Context) error {
 			Reason:         formData.Get(`reason`),
 			Raw:            formData,
 		}
-		ctx.Set(`notify`, result)
-		if err := a.notifyCallback(ctx); err != nil {
+		if err := a.notifyCallback(ctx, result); err != nil {
 			isSuccess = false
 		}
 	}
@@ -177,8 +176,7 @@ func (a *Mockpay) RefundNotify(ctx echo.Context) error {
 			OutRefundNo: formData.Get(`out_refund_no`),
 			Raw:         formData,
 		}
-		ctx.Set(`notify`, result)
-		if err := a.notifyCallback(ctx); err != nil {
+		if err := a.notifyCallback(ctx, result); err != nil {
 			log.Error(err)
 			isSuccess = false
 		}
