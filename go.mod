@@ -3,7 +3,7 @@ module github.com/webx-top/payment
 go 1.25.1
 
 require (
-	github.com/admpub/alipay/v3 v3.3.0
+	github.com/admpub/alipay/v3 v3.3.1
 	github.com/admpub/collate v1.2.0
 	github.com/admpub/decimal v1.3.2
 	github.com/admpub/go-ttlmap v1.1.0
@@ -14,8 +14,8 @@ require (
 	github.com/qingwg/payjs v0.0.0-20190928033402-c53dbe16b371
 	github.com/smartwalle/paypal v1.0.2
 	github.com/webx-top/codec v0.3.0
-	github.com/webx-top/com v1.4.1
-	github.com/webx-top/echo v1.23.5
+	github.com/webx-top/com v1.4.2
+	github.com/webx-top/echo v1.23.6
 	github.com/webx-top/restyclient v0.0.6
 )
 
