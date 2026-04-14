@@ -55,32 +55,36 @@ func GenerateSign(data url.Values, token string) string {
 func SetDefaults(a *config.Account) {
 	if a.Subtype == nil {
 		a.Subtype = config.NewSubtype(
-			`合约网络`,
+			echo.T(`合约网络`),
 		)
 	}
 	if len(a.Subtype.Options) == 0 {
-		var currencies []string
-		if len(a.Currencies) == 0 {
-			currencies = []string{`USDT`}
-		} else {
-			currencies = a.Currencies
+		var tokenTypes []string
+		if a.Options.Extra != nil {
+			v := a.Options.Extra.String(`tokenType`)
+			if len(v) > 0 {
+				tokenTypes = strings.Split(v, `,`)
+			}
+		}
+		if len(tokenTypes) == 0 {
+			tokenTypes = []string{`USDT`}
 		}
 		networks, err := queryNetworks(a)
 		if err != nil {
 			log.Error(err)
 			return
 		}
-		length := len(currencies)
-		needPrefix := length > 1 || a.Options.Title != currencies[0]
-		for i, currency := range currencies {
-			for j, network := range networks[currency] {
+		length := len(tokenTypes)
+		needPrefix := length > 1 || a.Options.Title != tokenTypes[0]
+		for i, tokenType := range tokenTypes {
+			for j, network := range networks[tokenType] {
 				stype := &config.SubtypeOption{
 					Value:   network.Value,
 					Text:    network.Label,
 					Checked: i == 0 && j == 0,
 				}
 				if needPrefix {
-					stype.Text = currency + ` • ` + network.Label
+					stype.Text = tokenType + ` • ` + network.Label
 				}
 				a.Subtype.Add(stype)
 			}

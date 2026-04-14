@@ -15,6 +15,8 @@ import (
 	"github.com/webx-top/restyclient"
 )
 
+// 使用服务端代码：https://github.com/andistributed/pusdt
+
 const Name = `epusdt`
 
 var (
@@ -123,8 +125,8 @@ func (a *EPUSDT) PayNotify(ctx echo.Context) error {
 			OutTradeNo:  callback.OrderId,
 			Currency:    `CNY`,
 			TotalAmount: callback.Amount,
-			PayCurrency: `USDT`,
-			PayAmount:   callback.ActualAmount,
+			PayCurrency: `CNY`,
+			PayAmount:   callback.TokenAmount,
 			Reason:      ``,
 			Raw:         callback,
 		}
@@ -162,8 +164,8 @@ func (a *EPUSDT) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result, 
 		OutTradeNo:  cfg.OutTradeNo,
 		Currency:    queryResult.Currency,
 		TotalAmount: queryResult.Amount,
-		PayCurrency: queryResult.ActualCurrency,
-		PayAmount:   queryResult.ActualAmount,
+		PayCurrency: queryResult.Currency,
+		PayAmount:   queryResult.TokenAmount,
 		Reason:      ``,
 		Raw:         recv,
 	}
