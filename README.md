@@ -10,3 +10,7 @@
 6. 支持XunhuPay(虎皮椒)支付
 
 ## 打赏
+
+## 中文文档
+
+项目的中文文档见 `docs/README.zh-CN.md`。
