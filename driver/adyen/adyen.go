@@ -170,14 +170,15 @@ func (a *Adyen) PayNotify(ctx echo.Context) error {
 			if a.notifyCallback != nil && n.Success {
 				refundNo := n.AdditionalData["refund.pspspReference"]
 				result := &config.Result{
-					Operation:  config.OperationRefund,
-					Status:     config.TradeStatusSuccess,
-					TradeNo:    n.PspReference,
-					OutTradeNo: n.MerchantReference,
-					Currency:   n.Currency,
-					RefundFee:  MinorToAmount(n.Value),
-					RefundNo:   refundNo,
-					Raw:        &n,
+					Operation:   config.OperationRefund,
+					Status:      config.TradeStatusSuccess,
+					TradeNo:     n.PspReference,
+					OutTradeNo:  n.MerchantReference,
+					Currency:    n.Currency,
+					RefundFee:   MinorToAmount(n.Value),
+					RefundNo:    refundNo,
+					OutRefundNo: n.AdditionalData["refund.merchantReference"],
+					Raw:         &n,
 				}
 				a.notifyCallback(ctx, result)
 			}

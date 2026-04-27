@@ -197,12 +197,13 @@ func (a *Twoco) PayNotify(ctx echo.Context) error {
 		case "REFUND_ISSUED":
 			refundNo := ctx.Form("refund_id")
 			result := &config.Result{
-				Operation:  config.OperationRefund,
-				Status:     config.TradeStatusSuccess,
-				TradeNo:    saleID,
-				OutTradeNo: invoiceID,
-				RefundNo:   refundNo,
-				RefundFee:  param.AsFloat64(ctx.Form("refund_usd")),
+				Operation:   config.OperationRefund,
+				Status:      config.TradeStatusSuccess,
+				TradeNo:     saleID,
+				OutTradeNo:  invoiceID,
+				RefundNo:    refundNo,
+				RefundFee:   param.AsFloat64(ctx.Form("refund_usd")),
+				OutRefundNo: ``,
 			}
 			a.notifyCallback(ctx, result)
 		}

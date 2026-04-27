@@ -156,11 +156,12 @@ func (a *Paddle) PayNotify(ctx echo.Context) error {
 		}
 	case "payment.refunded":
 		var refData struct {
-			ID          string `json:"id"`
-			TransactionID string `json:"transaction_id"`
-			Amount      string `json:"amount"`
-			Currency    string `json:"currency"`
-			Status      string `json:"status"`
+			ID            string            `json:"id"`
+			TransactionID string            `json:"transaction_id"`
+			Amount        string            `json:"amount"`
+			Currency      string            `json:"currency"`
+			Status        string            `json:"status"`
+			CustomData    map[string]string `json:"custom_data"`
 		}
 		json.Unmarshal(payload.Data, &refData)
 		if a.notifyCallback != nil && refData.Status == "completed" {
@@ -168,7 +169,9 @@ func (a *Paddle) PayNotify(ctx echo.Context) error {
 				Operation:   config.OperationRefund,
 				Status:      config.TradeStatusSuccess,
 				TradeNo:     refData.TransactionID,
+				OutTradeNo:  refData.CustomData["out_trade_no"],
 				RefundNo:    refData.ID,
+				OutRefundNo: refData.CustomData["out_refund_no"],
 				Currency:    refData.Currency,
 				RefundFee:   param.AsFloat64(refData.Amount),
 				Raw:         &payload,

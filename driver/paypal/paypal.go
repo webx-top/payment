@@ -253,7 +253,7 @@ func (a *Paypal) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, e
 		Reason:         refund.Reason,
 		RefundFee:      param.AsFloat64(refund.Amount.Total),
 		RefundNo:       refund.Id,
-		OutRefundNo:    ``,
+		OutRefundNo:    cfg.OutRefundNo,
 		Raw:            refund,
 	}, err
 }
@@ -285,7 +285,7 @@ func (a *Paypal) RefundQuery(ctx echo.Context, cfg *config.Query) (*config.Resul
 		Reason:         refund.Reason,
 		RefundFee:      param.AsFloat64(refund.Amount.Total),
 		RefundNo:       refund.Id,
-		OutRefundNo:    ``,
+		OutRefundNo:    cfg.OutRefundNo,
 		Raw:            refund,
 	}, err
 }
