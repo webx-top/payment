@@ -112,6 +112,7 @@ func (a *Adyen) VerifySign(ctx echo.Context) error {
 	}
 	return a.verifySign(notifications)
 }
+
 func (a *Adyen) verifySign(notifications []adyenNotification) error {
 	if len(a.hmacKey) == 0 {
 		return nil
