@@ -1,6 +1,6 @@
 module github.com/webx-top/payment
 
-go 1.25.1
+go 1.26
 
 require (
 	github.com/admpub/alipay/v3 v3.3.1
@@ -31,6 +31,7 @@ require (
 	github.com/admpub/realip v0.2.7 // indirect
 	github.com/admpub/timeago v1.3.0 // indirect
 	github.com/admpub/xencoding v0.0.3 // indirect
+	github.com/adyen/adyen-go-api-library/v16 v16.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/francoispqt/gojay v1.2.13 // indirect
 	github.com/goccy/go-json v0.10.6 // indirect
@@ -45,6 +46,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/onsi/gomega v1.19.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/razorpay/razorpay-go v1.4.1 // indirect
 	github.com/smartwalle/ncrypto v1.0.4 // indirect
 	github.com/smartwalle/ngx v1.1.0 // indirect
 	github.com/smartwalle/nsign v1.0.9 // indirect
@@ -56,6 +58,7 @@ require (
 	github.com/webx-top/validation v0.0.3 // indirect
 	golang.org/x/crypto v0.49.0 // indirect
 	golang.org/x/net v0.52.0 // indirect
+	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
