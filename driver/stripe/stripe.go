@@ -9,7 +9,6 @@ import (
 	"github.com/stripe/stripe-go/v81/checkout/session"
 	"github.com/stripe/stripe-go/v81/paymentintent"
 	"github.com/stripe/stripe-go/v81/refund"
-	"github.com/stripe/stripe-go/v81/webhook"
 	"github.com/webx-top/echo"
 	"github.com/webx-top/echo/param"
 	"github.com/webx-top/payment"
@@ -126,10 +125,7 @@ func (a *Stripe) PayNotify(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
-
-	signature := ctx.Request().Header().Get("Stripe-Signature")
-
-	event, err := webhook.ConstructEvent(body, signature, a.account.WebhookID)
+	event, err := a.verifySignAndGetEvent(ctx, body)
 	if err != nil {
 		return ctx.JSON(echo.H{"error": "invalid signature"})
 	}
@@ -178,30 +174,7 @@ func (a *Stripe) PayNotify(ctx echo.Context) error {
 				return err
 			}
 		}
-	case stripe.EventTypeChargeRefunded:
-		var ch stripe.Charge
-		err := json.Unmarshal(event.Data.Raw, &ch)
-		if err != nil {
-			return err
-		}
-		if a.notifyCallback != nil && len(ch.Refunds.Data) > 0 {
-			refundObj := ch.Refunds.Data[0]
-			result := &config.Result{
-				Operation:      config.OperationRefund,
-				Status:         config.TradeStatusSuccess,
-				TradeNo:        ch.PaymentIntent.ID,
-				OutTradeNo:     ch.Metadata["out_trade_no"],
-				Currency:       string(ch.Currency),
-				RefundFee:      CentToAmount(refundObj.Amount, string(ch.Currency)),
-				RefundNo:       refundObj.ID,
-				OutRefundNo:    refundObj.Metadata["out_refund_no"],
-				PassbackParams: ch.Metadata["passback_params"],
-				Raw:            &ch,
-			}
-			if err := a.notifyCallback(ctx, result); err != nil {
-				return err
-			}
-		}
+
 	}
 
 	return ctx.JSON(echo.H{"status": "ok"})
@@ -278,9 +251,47 @@ func (a *Stripe) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, e
 	}, nil
 }
 
-// RefundNotify 退款通知处理(Stripe退款通过webhook统一处理)
+// RefundNotify 处理Stripe退款Webhook通知
+// 文档: https://stripe.com/docs/webhooks
+// 仅处理 charge.refunded 事件
 func (a *Stripe) RefundNotify(ctx echo.Context) error {
-	return a.PayNotify(ctx)
+	body, err := io.ReadAll(ctx.Request().Body())
+	if err != nil {
+		return err
+	}
+	event, err := a.verifySignAndGetEvent(ctx, body)
+	if err != nil {
+		return ctx.JSON(echo.H{"error": "invalid signature"})
+	}
+
+	switch event.Type {
+	case stripe.EventTypeChargeRefunded:
+		var ch stripe.Charge
+		err := json.Unmarshal(event.Data.Raw, &ch)
+		if err != nil {
+			return err
+		}
+		if a.notifyCallback != nil && len(ch.Refunds.Data) > 0 {
+			refundObj := ch.Refunds.Data[0]
+			result := &config.Result{
+				Operation:      config.OperationRefund,
+				Status:         config.TradeStatusSuccess,
+				TradeNo:        ch.PaymentIntent.ID,
+				OutTradeNo:     ch.Metadata["out_trade_no"],
+				Currency:       string(ch.Currency),
+				RefundFee:      CentToAmount(refundObj.Amount, string(ch.Currency)),
+				RefundNo:       refundObj.ID,
+				OutRefundNo:    refundObj.Metadata["out_refund_no"],
+				PassbackParams: ch.Metadata["passback_params"],
+				Raw:            &ch,
+			}
+			if err := a.notifyCallback(ctx, result); err != nil {
+				return err
+			}
+		}
+	}
+
+	return ctx.JSON(echo.H{"status": "ok"})
 }
 
 // RefundQuery 查询退款状态

@@ -113,7 +113,14 @@ func (a *Stripe) VerifySign(ctx echo.Context) error {
 		return err
 	}
 
-	signature := ctx.Request().Header().Get("Stripe-Signature")
-	_, err = webhook.ConstructEvent(body, signature, a.account.WebhookID)
+	_, err = a.verifySignAndGetEvent(ctx, body)
 	return err
+}
+
+// verifySignAndGetEvent 验证Stripe Webhook签名并解析事件
+// 从请求头获取 Stripe-Signature，使用 Webhook Secret 验证签名并构造 stripe.Event 对象
+// 文档: https://stripe.com/docs/webhooks/signatures
+func (a *Stripe) verifySignAndGetEvent(ctx echo.Context, body []byte) (stripe.Event, error) {
+	signature := ctx.Request().Header().Get("Stripe-Signature")
+	return webhook.ConstructEvent(body, signature, a.account.WebhookID)
 }
