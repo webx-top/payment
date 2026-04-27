@@ -209,15 +209,52 @@ func (a *Authorize) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result
 	}, nil
 }
 
-// RefundNotify 通过 PayNotify 统一处理
+// RefundNotify 处理退款通知 (Silent Post / Webhook)
+// 文档: https://developer.authorize.com/api/reference/features/authentication.html#Silent_Post
+// 退款通知的 x_type 字段为 "credit" 或 "refund"
 func (a *Authorize) RefundNotify(ctx echo.Context) error {
-	return a.PayNotify(ctx)
+	responseCode := ctx.Form("x_response_code")
+	transID := ctx.Form("x_trans_id")
+	invoiceNum := ctx.Form("x_invoice_num")
+	amountStr := ctx.Form("x_amount")
+	md5Hash := ctx.Form("x_md5_hash")
+
+	// MD5 Hash 验证 (与支付相同算法)
+	if !a.verifyMD5Hash(md5Hash, transID, amountStr) {
+		return ctx.String("error: invalid signature")
+	}
+
+	if a.notifyCallback != nil {
+		status := MapRefundStatus(responseCode)
+
+		result := &config.Result{
+			Operation:   config.OperationRefund,
+			Status:      status,
+			TradeNo:     transID,
+			OutTradeNo:  invoiceNum,
+			Currency:    "USD",
+			TotalAmount: param.AsFloat64(amountStr),
+			RefundFee:   param.AsFloat64(amountStr),
+			RefundNo:    transID,
+			OutRefundNo: ctx.Form("x_refund_trans_id"),
+		}
+		a.notifyCallback(ctx, result)
+	}
+
+	return ctx.String("")
 }
 
 // RefundQuery 查询退款(通过查询原始交易获取退款信息)
 func (a *Authorize) RefundQuery(ctx echo.Context, cfg *config.Query) (*config.Result, error) {
-	// Authorize.Net 的退款查询和普通交易查询相同
-	return a.PayQuery(ctx, cfg)
+	result, err := a.PayQuery(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+	result.Operation = config.OperationRefund
+	result.RefundFee = result.TotalAmount // 退款金额等于查询到的交易金额
+	result.RefundNo = result.TradeNo       // Authorize.Net 退款复用同一trans ID
+	result.OutRefundNo = cfg.OutRefundNo
+	return result, nil
 }
 
 // --- 内部方法 ---

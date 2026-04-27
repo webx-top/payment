@@ -233,9 +233,41 @@ func (a *Mollie) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, e
 	}, nil
 }
 
-// RefundNotify 退款通知(Mollie不单独发退款webhook，通过PayNotify处理)
+// RefundNotify 处理退款通知
+// Mollie 不单独发退款 webhook，但此方法需独立返回退款语义的结果。
+// 调用方应传入 refund_id，通过查询退款详情获取信息
+// 文档: https://docs.mollie.com/reference/v2/refunds-api/get-refund
 func (a *Mollie) RefundNotify(ctx echo.Context) error {
-	return a.PayNotify(ctx)
+	// 优先从表单/参数获取 refund_id，否则回退到 payment id
+	refundID := ctx.Form("refund_id")
+	if len(refundID) == 0 {
+		refundID = ctx.Param("id")
+	}
+
+	if len(refundID) == 0 {
+		return ctx.JSON(echo.H{"error": "missing refund id"})
+	}
+
+	refund, err := a.getRefund(refundID)
+	if err != nil {
+		return ctx.JSON(echo.H{"error": err.Error()})
+	}
+
+	if a.notifyCallback != nil && refund.Status == "refunded" {
+		result := &config.Result{
+			Operation:   config.OperationRefund,
+			Status:      config.TradeStatusSuccess,
+			TradeNo:     refund.PaymentID,
+			Currency:    refund.Amount["currency"],
+			TotalAmount: param.AsFloat64(refund.Amount["value"]),
+			RefundFee:   param.AsFloat64(refund.Amount["value"]),
+			RefundNo:    refund.ID,
+			OutRefundNo: defaultString(refund.Metadata["out_refund_no"], ""),
+			Raw:         refund,
+		}
+		a.notifyCallback(ctx, result)
+	}
+	return ctx.String("ok")
 }
 
 // RefundQuery 查询退款状态
@@ -289,9 +321,25 @@ func (a *Mollie) getPayment(id string) (*molliePayment, error) {
 	return &response, nil
 }
 
+// getRefund 内部方法：获取退款信息
+// 文档: https://docs.mollie.com/reference/v2/refunds-api/get-refund
+func (a *Mollie) getRefund(id string) (*mollieRefund, error) {
+	var refund mollieRefund
+	resp, err := a.client().
+		SetResult(&refund).
+		Get(a.apiURL + "/v2/refunds/" + id)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("mollie: get refund failed %d", resp.StatusCode())
+	}
+	return &refund, nil
+}
+
 type molliePayment struct {
 	ID            string            `json:"id"`
-	Status        string            `json:"mode"`
+	Status        string            `json:"status"`
 	IsCancelable  bool              `json:"isCancelable"`
 	Amount        map[string]string `json:"amount"`
 	AmountCaptured map[string]string `json:"amountCaptured"`
@@ -307,4 +355,14 @@ type molliePayment struct {
 	Links         struct {
 		PaymentURL struct { Href string } `json:"paymentUrl"`
 	} `json:"_links"`
+}
+
+type mollieRefund struct {
+	ID        string            `json:"id"`
+	Status    string            `json:"status"`
+	Amount    map[string]string `json:"amount"`
+	PaymentID string            `json:"paymentId"`
+	Metadata  map[string]string `json:"metadata"`
+	SettledAt string            `json:"settledAt"`
+	CreatedAt string            `json:"createdAt"`
 }

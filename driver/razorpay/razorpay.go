@@ -126,48 +126,59 @@ func (a *Razorpay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, 
 	return result, nil
 }
 
-// PayNotify 处理 Webhook 回调
+// razorpayWebhookPayload Razorpay webhook 通用载荷结构
+type razorpayWebhookPayload struct {
+	PaymentID string `json:"payment_id"`
+	Entity    string `json:"entity"`
+	Event     string `json:"event"` // payment.captured / payment.failed / refund.processed / refund.created
+	Payload   struct {
+		Payment struct {
+			ID        string            `json:"id"`
+			Entity    string            `json:"entity"`
+			Amount    int64             `json:"amount"`
+			Currency  string            `json:"currency"`
+			Status    string            `json:"status"`
+			OrderID   string            `json:"order_id"`
+			Method    string            `json:"method"`
+			BankRefNo string            `json:"acquirer_data.bank_ref_no"`
+			CreatedAt int64             `json:"created_at"`
+			Notes     map[string]string `json:"notes"`
+		} `json:"payment"`
+		Refund struct {
+			ID        string            `json:"id"`
+			Entity    string            `json:"entity"`
+			Amount    int64             `json:"amount"`
+			Currency  string            `json:"currency"`
+			Status    string            `json:"status"`
+			CreatedAt int64             `json:"created_at"`
+			Notes     map[string]string `json:"notes"`
+		} `json:"refund"`
+		Order struct {
+			ID      string `json:"id"`
+			Entity  string `json:"entity"`
+			Amount  int64  `json:"amount"`
+			Receipt string `json:"receipt"`
+			Status  string `json:"status"`
+		} `json:"order"`
+	} `json:"payload"`
+}
+
+// PayNotify 处理 Webhook 回调(仅支付事件)
 // 文档: https://razorpay.com/docs/webhooks/
-// Razorpay webhook 签名验证: https://razorpay.com/docs/signature-verification/
 func (a *Razorpay) PayNotify(ctx echo.Context) error {
 	if err := a.VerifySign(ctx); err != nil {
 		return ctx.JSON(echo.H{"error": err.Error()})
 	}
 
-	var payload struct {
-		PaymentID string `json:"payment_id"`
-		Entity    string `json:"entity"`
-		Event     string `json:"event"`     // payment.captured / payment.failed
-		Payload   struct {
-			Payment struct {
-				ID           string `json:"id"`
-				Entity       string `json:"entity"`
-				Amount       int64  `json:"amount"`
-				Currency     string `json:"currency"`
-				Status       string `json:"status"`
-				OrderID      string `json:"order_id"`
-				Method       string `json:"method"`
-				BankRefNo    string `json:"acquirer_data.bank_ref_no"`
-				CreatedAt    int64  `json:"created_at"`
-				Notes        map[string]string `json:"notes"`
-			} `json:"payment"`
-			Order struct {
-				ID       string `json:"id"`
-				Entity   string `json:"entity"`
-				Amount   int64  `json:"amount"`
-				Receipt  string `json:"receipt"`
-				Status   string `json:"status"`
-			} `json:"order"`
-		} `json:"payload"`
-	}
+	var payload razorpayWebhookPayload
 	err := ctx.MustBind(&payload)
 	if err != nil {
 		return err
 	}
 
+	p := payload.Payload.Payment
 	switch payload.Event {
 	case "payment.captured":
-		p := payload.Payload.Payment
 		if a.notifyCallback != nil && p.Status == "captured" {
 			result := &config.Result{
 				Operation:   config.OperationPayment,
@@ -181,7 +192,6 @@ func (a *Razorpay) PayNotify(ctx echo.Context) error {
 			a.notifyCallback(ctx, result)
 		}
 	case "payment.failed":
-		p := payload.Payload.Payment
 		if a.notifyCallback != nil {
 			result := &config.Result{
 				Operation:   config.OperationPayment,
@@ -194,23 +204,12 @@ func (a *Razorpay) PayNotify(ctx echo.Context) error {
 			}
 			a.notifyCallback(ctx, result)
 		}
-	case "refund.processed", "refund.created":
-		refundPayload := payload.Payload.Payment // refund event structure differs slightly
-		if a.notifyCallback != nil {
-			result := &config.Result{
-				Operation: config.OperationRefund,
-				Status:    config.TradeStatusSuccess,
-				TradeNo:   refundPayload.ID,
-				Raw:       &payload,
-			}
-			a.notifyCallback(ctx, result)
-		}
 	}
 
 	return ctx.JSON(echo.H{"status": "ok"})
 }
 
-// PayQuery 查询支付状态(通过 Order API)
+// PayQuery 查询支付状态(通过 Payment API)
 // 文档: https://razorpay.com/docs/api/payments/#fetch-a-payment
 func (a *Razorpay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result, error) {
 	var response struct {
@@ -249,8 +248,8 @@ func (a *Razorpay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result
 // 文档: https://razorpay.com/docs/api/refunds/#create-refund
 func (a *Razorpay) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, error) {
 	body := map[string]interface{}{
-		"amount":   AmountToPaise(cfg.RefundAmount),
-		"speed":    "normal", // optimal / normal / worst
+		"amount": AmountToPaise(cfg.RefundAmount),
+		"speed":  "normal", // optimal / normal / worst
 		"notes": map[string]string{
 			"out_refund_no": cfg.OutRefundNo,
 		},
@@ -290,20 +289,75 @@ func (a *Razorpay) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result,
 	}, nil
 }
 
-// RefundNotify 通过 PayNotify 统一处理
+// RefundNotify 处理退款通知(Razorpay退款webhook与支付共用同一endpoint)
+// 此方法独立处理退款语义，仅响应 refund.* 事件
+// 文档: https://razorpay.com/docs/webhooks/
 func (a *Razorpay) RefundNotify(ctx echo.Context) error {
-	return a.PayNotify(ctx)
+	if err := a.VerifySign(ctx); err != nil {
+		return ctx.JSON(echo.H{"error": err.Error()})
+	}
+
+	var payload razorpayWebhookPayload
+	err := ctx.MustBind(&payload)
+	if err != nil {
+		return err
+	}
+
+	// 仅处理退款事件
+	switch payload.Event {
+	case "refund.processed":
+		refund := payload.Payload.Refund
+		p := payload.Payload.Payment
+		if a.notifyCallback != nil {
+			result := &config.Result{
+				Operation:   config.OperationRefund,
+				Status:      config.TradeStatusSuccess,
+				TradeNo:     p.ID,
+				OutTradeNo:  defaultString(p.Notes["out_trade_no"], p.OrderID),
+				Currency:    refund.Currency,
+				TotalAmount: PaiseToAmount(p.Amount),
+				RefundFee:   PaiseToAmount(refund.Amount),
+				RefundNo:    refund.ID,
+				OutRefundNo: defaultString(refund.Notes["out_refund_no"], ""),
+				Raw:         &payload,
+			}
+			a.notifyCallback(ctx, result)
+		}
+	case "refund.created":
+		refund := payload.Payload.Refund
+		p := payload.Payload.Payment
+		if a.notifyCallback != nil {
+			result := &config.Result{
+				Operation:   config.OperationRefund,
+				Status:      config.TradeStatusProcessing,
+				TradeNo:     p.ID,
+				OutTradeNo:  defaultString(p.Notes["out_trade_no"], p.OrderID),
+				Currency:    refund.Currency,
+				TotalAmount: PaiseToAmount(p.Amount),
+				RefundFee:   PaiseToAmount(refund.Amount),
+				RefundNo:    refund.ID,
+				OutRefundNo: defaultString(refund.Notes["out_refund_no"], ""),
+				Raw:         &payload,
+			}
+			a.notifyCallback(ctx, result)
+		}
+	default:
+		// 非退款事件不处理
+	}
+
+	return ctx.JSON(echo.H{"status": "ok"})
 }
 
 // RefundQuery 查询退款状态
 // 文档: https://razorpay.com/docs/api/refunds/#fetch-a-refund
 func (a *Razorpay) RefundQuery(ctx echo.Context, cfg *config.Query) (*config.Result, error) {
 	var response struct {
-		ID       string `json:"id"`
-		Amount   int64  `json:"amount"`
-		Currency string `json:"currency"`
-		Status   string `json:"status"`
-		Notes    map[string]string `json:"notes"`
+		ID        string `json:"id"`
+		Amount    int64  `json:"amount"`
+		Currency  string `json:"currency"`
+		Status    string `json:"status"`
+		PaymentID string `json:"payment_id"`
+		Notes     map[string]string `json:"notes"`
 	}
 
 	resp, err := a.client().
@@ -321,7 +375,7 @@ func (a *Razorpay) RefundQuery(ctx echo.Context, cfg *config.Query) (*config.Res
 	return &config.Result{
 		Operation:   config.OperationRefund,
 		Status:      status,
-		TradeNo:     "", // refund 不直接包含 payment_id，需从 notes 获取
+		TradeNo:     response.PaymentID,
 		OutTradeNo:  defaultString(response.Notes["out_trade_no"], ""),
 		Currency:    response.Currency,
 		RefundFee:   PaiseToAmount(response.Amount),
