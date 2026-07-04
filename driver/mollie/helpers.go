@@ -68,5 +68,9 @@ func (a *Mollie) VerifySign(ctx echo.Context) error {
 	if !strings.HasPrefix(auth, "Bearer ") {
 		return echo.NewError("missing authorization header")
 	}
+	token := strings.TrimPrefix(auth, "Bearer ")
+	if token != a.account.AppSecret {
+		return echo.NewError("invalid authorization token")
+	}
 	return nil
 }

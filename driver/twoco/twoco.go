@@ -36,7 +36,7 @@ var SupportedCurrencies = []string{
 	"LBP", "LKR", "MVR", "MWK", "MXN", "MYR",
 	"MZN", "NAD", "NIO", "NGN", "NOK", "OMR",
 	"PKR", "PGK", "PHP", "PLN", "QAR", "RON",
-	"SAR", "SBD", "SOS", "ZAR", "LKR", "SEK",
+	"SAR", "SBD", "SOS", "ZAR", "SEK",
 	"TJS", "TZS", "THB", "TTD", "TRY", "UGX",
 	"UAH", "AED", "UYU", "VUV", "VEB", "VND",
 	"XCD", "YER", "ZMK", "ZWD", "CNY", "JPY",
@@ -47,9 +47,9 @@ var SupportedCurrencies = []string{
 	"BZD", "CDF", "CVE", "DJF", "DOP", "ERN",
 	"FKP", "GIP", "GNF", "HTG", "IRR", "JMD",
 	"KMF", "LSL", "LYD", "MAD", "MMK", "MNT",
-	"MRO", "MUR", "MVR", "NPR", "PAB", "PKR",
-	"QAR", "RWF", "SDG", "SRD", "SYP", "TOP",
-	"UAH", "WST", "XAF", "XOF", "XPF", "ZWL",
+	"MRO", "MUR", "NPR", "PAB", "RWF", "SDG",
+	"SRD", "SYP", "TOP", "WST", "XAF", "XOF",
+	"XPF", "ZWL",
 }
 
 // Verifone 2Checkout (现称 Verifone Payments)

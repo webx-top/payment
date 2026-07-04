@@ -57,12 +57,13 @@ func (a *Paddle) SetNotifyCallback(callback payment.NotifyCallback) payment.Driv
 
 func (a *Paddle) SetAccount(account *config.Account) payment.Driver {
 	a.account = account
-	a.apiURL = account.Options.Extra.String("apiURL")
-	if len(a.apiURL) == 0 {
-		a.apiURL = "https://sandbox-api.paddle.com" // 默认沙箱环境
-	}
-	if !a.account.Debug {
-		a.apiURL = "https://api.paddle.com" // 生产环境
+	customURL := account.Options.Extra.String("apiURL")
+	if len(customURL) > 0 {
+		a.apiURL = customURL
+	} else if a.account.Debug {
+		a.apiURL = "https://sandbox-api.paddle.com"
+	} else {
+		a.apiURL = "https://api.paddle.com"
 	}
 	a.apiKey = a.account.AppSecret // API Key
 	return a
@@ -83,7 +84,14 @@ func (a *Paddle) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, er
 	if err != nil {
 		return nil, err
 	}
-	priceID := priceResp.Data.(map[string]interface{})["id"].(string)
+	priceData, ok := priceResp.Data.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("paddle: unexpected price response type")
+	}
+	priceID, ok := priceData["id"].(string)
+	if !ok {
+		return nil, fmt.Errorf("paddle: unexpected price id type")
+	}
 
 	// Step 2: 创建 Checkout Session
 	checkoutResp, err := a.createCheckout(priceID, cfg)
@@ -91,7 +99,10 @@ func (a *Paddle) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, er
 		return nil, err
 	}
 
-	data := checkoutResp.Data.(map[string]interface{})
+	data, ok := checkoutResp.Data.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("paddle: unexpected checkout response type")
+	}
 	redirectURL := ""
 	if urlData, ok := data["url"]; ok {
 		redirectURL, _ = urlData.(string)
@@ -118,8 +129,8 @@ func (a *Paddle) PayNotify(ctx echo.Context) error {
 	}
 
 	var payload struct {
-		EventType string `json:"event_type"` // checkout.completed / transaction.completed / payment.refunded
-		EventID   string `json:"event_id"`
+		EventType string          `json:"event_type"` // checkout.completed / transaction.completed / payment.refunded
+		EventID   string          `json:"event_id"`
 		Data      json.RawMessage `json:"data"`
 	}
 	err := ctx.MustBind(&payload)
@@ -130,11 +141,11 @@ func (a *Paddle) PayNotify(ctx echo.Context) error {
 	switch payload.EventType {
 	case "transaction.completed":
 		var txData struct {
-			ID             string `json:"id"`
-			Status          string `json:"status"`
-			InvoiceNumber  string `json:"invoice_number"`
-			CustomData     string `json:"custom_data,omitempty"`
-			Details struct {
+			ID            string `json:"id"`
+			Status        string `json:"status"`
+			InvoiceNumber string `json:"invoice_number"`
+			CustomData    string `json:"custom_data,omitempty"`
+			Details       struct {
 				Total struct {
 					Amount   string `json:"amount"`
 					Currency string `json:"currency"`
@@ -201,9 +212,9 @@ func (a *Paddle) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result, 
 	}
 
 	var txData struct {
-		ID        string `json:"id"`
-		Status    string `json:"status"`
-		Details   struct {
+		ID      string `json:"id"`
+		Status  string `json:"status"`
+		Details struct {
 			Total struct {
 				Amount   string `json:"amount"`
 				Currency string `json:"currency"`
@@ -254,10 +265,10 @@ func (a *Paddle) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, e
 	}
 
 	var refData struct {
-		ID          string `json:"id"`
-		Status      string `json:"status"`
-		Amount      string `json:"amount"`
-		Currency    string `json:"currency"`
+		ID       string `json:"id"`
+		Status   string `json:"status"`
+		Amount   string `json:"amount"`
+		Currency string `json:"currency"`
 	}
 	json.Unmarshal(response.Data, &refData)
 
@@ -299,11 +310,11 @@ func (a *Paddle) RefundQuery(ctx echo.Context, cfg *config.Query) (*config.Resul
 	}
 
 	var refData struct {
-		ID            string `json:"id"`
-		Status        string `json:"status"`
-		TransactionID string `json:"transaction_id"`
-		Amount        string `json:"amount"`
-		Currency      string `json:"currency"`
+		ID            string            `json:"id"`
+		Status        string            `json:"status"`
+		TransactionID string            `json:"transaction_id"`
+		Amount        string            `json:"amount"`
+		Currency      string            `json:"currency"`
 		CustomData    map[string]string `json:"custom_data"`
 	}
 	json.Unmarshal(response.Data, &refData)
@@ -339,7 +350,7 @@ func (a *Paddle) createPrice(cfg *config.Pay) (*paddleAPIResponse, error) {
 		},
 		"description": defaultString(cfg.Subject, ""),
 		"billing_period": map[string]interface{}{
-			"interval": "day",
+			"interval":  "day",
 			"frequency": 1,
 		},
 		"trial_period": nil,

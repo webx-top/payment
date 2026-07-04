@@ -242,7 +242,7 @@ func (a *Stripe) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, e
 		},
 	}
 	if len(cfg.RefundReason) > 0 {
-		params.Reason = stripe.String(string(stripe.RefundReasonRequestedByCustomer))
+		params.Metadata["reason"] = cfg.RefundReason
 	}
 
 	ref, err := a.refundClient.New(params)

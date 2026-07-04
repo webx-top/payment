@@ -62,7 +62,7 @@ func (a *Razorpay) SetAccount(account *config.Account) payment.Driver {
 			a.apiURL = "https://api.razorpay.com"
 		}
 	}
-	a.apiKey = a.account.AppID       // key_id (rzp_live_xxx)
+	a.apiKey = a.account.AppID        // key_id (rzp_live_xxx)
 	a.apiSecret = a.account.AppSecret // key_secret
 	return a
 }
@@ -79,9 +79,9 @@ func (a *Razorpay) client() *resty.Request {
 // Razorpay 使用 Order + Payment 两步流程，前端拿到 order_id 后用 Checkout SDK 完成支付
 func (a *Razorpay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, error) {
 	body := map[string]interface{}{
-		"amount":          AmountToPaise(cfg.Amount),
-		"currency":        strings.ToLower(cfg.Currency.String()),
-		"receipt":         cfg.OutTradeNo,
+		"amount":   AmountToPaise(cfg.Amount),
+		"currency": strings.ToLower(cfg.Currency.String()),
+		"receipt":  cfg.OutTradeNo,
 		"notes": map[string]string{
 			"out_trade_no": cfg.OutTradeNo,
 		},
@@ -105,7 +105,7 @@ func (a *Razorpay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, 
 	if resp.StatusCode() != http.StatusOK {
 		var rzErr struct {
 			Error struct {
-				Code    string `json:"code"`
+				Code        string `json:"code"`
 				Description string `json:"description"`
 			} `json:"error"`
 		}
@@ -119,7 +119,7 @@ func (a *Razorpay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, 
 			"order_id": response.ID,
 			"key_id":   a.apiKey,
 			"currency": strings.ToLower(cfg.Currency.String()),
-			"amount":   fmt.Sprintf("%.0f", AmountToPaise(cfg.Amount)),
+			"amount":   fmt.Sprintf("%d", AmountToPaise(cfg.Amount)),
 		},
 		Raw: &response,
 	}
@@ -213,11 +213,11 @@ func (a *Razorpay) PayNotify(ctx echo.Context) error {
 // 文档: https://razorpay.com/docs/api/payments/#fetch-a-payment
 func (a *Razorpay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result, error) {
 	var response struct {
-		ID       string `json:"id"`
-		Amount   int64  `json:"amount"`
-		Currency string `json:"currency"`
-		Status   string `json:"status"`
-		Method   string `json:"method"`
+		ID       string            `json:"id"`
+		Amount   int64             `json:"amount"`
+		Currency string            `json:"currency"`
+		Status   string            `json:"status"`
+		Method   string            `json:"method"`
 		Notes    map[string]string `json:"notes"`
 	}
 
@@ -352,11 +352,11 @@ func (a *Razorpay) RefundNotify(ctx echo.Context) error {
 // 文档: https://razorpay.com/docs/api/refunds/#fetch-a-refund
 func (a *Razorpay) RefundQuery(ctx echo.Context, cfg *config.Query) (*config.Result, error) {
 	var response struct {
-		ID        string `json:"id"`
-		Amount    int64  `json:"amount"`
-		Currency  string `json:"currency"`
-		Status    string `json:"status"`
-		PaymentID string `json:"payment_id"`
+		ID        string            `json:"id"`
+		Amount    int64             `json:"amount"`
+		Currency  string            `json:"currency"`
+		Status    string            `json:"status"`
+		PaymentID string            `json:"payment_id"`
 		Notes     map[string]string `json:"notes"`
 	}
 

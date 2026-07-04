@@ -135,6 +135,7 @@ func (a *Wechat) PayNotify(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
+	ctx.Request().SetBody(strings.NewReader(string(b)))
 	resp := wxpay.XmlToMap(string(b))
 	if !a.Client().ValidSign(resp) {
 		return config.ErrSignature
@@ -267,6 +268,7 @@ func (a *Wechat) RefundNotify(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
+	ctx.Request().SetBody(strings.NewReader(string(b)))
 	resp := wxpay.XmlToMap(string(b))
 	if !a.Client().ValidSign(resp) {
 		return config.ErrSignature
@@ -356,7 +358,7 @@ func (a *Wechat) RefundQuery(ctx echo.Context, cfg *config.Query) (*config.Resul
 		refundStatus := resp.GetString(fmt.Sprintf(`refund_status_%d`, i))
 		refundFeeInt := resp.GetInt64(fmt.Sprintf(`refund_fee_%d`, i))
 		outRefundNo := resp.GetString(fmt.Sprintf(`out_refund_no_%d`, i))
-		refundNo := resp.GetString(fmt.Sprintf(`out_id_%d`, i))
+		refundNo := resp.GetString(fmt.Sprintf(`refund_id_%d`, i))
 		switch refundStatus {
 		case `SUCCESS`:
 			refundStatus = config.TradeStatusSuccess

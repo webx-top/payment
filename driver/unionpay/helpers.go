@@ -6,20 +6,24 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"io"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/admpub/log"
 	"github.com/webx-top/echo"
+	"github.com/webx-top/payment"
 	"github.com/webx-top/payment/config"
 )
 
 // AmountToYi 金额转分(银联单位: 分，整数)
 func AmountToYi(amount float64) string {
-	return strconv.FormatInt(int64(amount*100), 10)
+	return payment.MulFloat(amount, 100, 0)
 }
 
 // YiToAmount 分转金额
@@ -156,17 +160,34 @@ func (a *UnionPay) VerifyPayloadSign(payload map[string]string) error {
 	return nil
 }
 
-// parseFormData 解析请求中的表单数据(支持 form-data / JSON 两种格式)
+// parseFormData 解析请求中的表单数据(支持 JSON / form-encoded 两种格式)
 func parseFormData(ctx echo.Context) map[string]string {
 	result := make(map[string]string)
 
+	body, err := io.ReadAll(ctx.Request().Body())
+	if err != nil {
+		return result
+	}
+	ctx.Request().SetBody(strings.NewReader(string(body)))
+
+	// Try JSON first
 	var jsonPayload map[string]string
-	if err := ctx.MustBind(&jsonPayload); err == nil && len(jsonPayload) > 0 {
+	if err := json.Unmarshal(body, &jsonPayload); err == nil && len(jsonPayload) > 0 {
 		for k, v := range jsonPayload {
 			result[k] = v
 		}
+		return result
 	}
 
+	// Fallback: form-encoded (UnionPay sends form data in notifications)
+	values, err := url.ParseQuery(string(body))
+	if err == nil {
+		for k, v := range values {
+			if len(v) > 0 {
+				result[k] = v[0]
+			}
+		}
+	}
 	return result
 }
 
@@ -287,4 +308,9 @@ func parsePublicKey(derBytes []byte) (*rsa.PublicKey, error) {
 		return pkcs1Pub, nil
 	}
 	return nil, fmt.Errorf("failed to parse public key: pkix=%v, pkcs1=%v", pkixErr, pkcs1Err)
+}
+
+// parseQuery 解析银联返回的 URL-encoded 格式数据
+func parseQuery(data string) (url.Values, error) {
+	return url.ParseQuery(data)
 }

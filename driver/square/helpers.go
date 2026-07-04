@@ -113,7 +113,10 @@ func (a *Square) VerifySign(ctx echo.Context) error {
 	ctx.Request().SetBody(strings.NewReader(string(body)))
 
 	// signed_payload = notification_url + raw_body
-	notificationURL := ctx.FullRequestURI()
+	notificationURL := a.account.Options.Extra.String("notificationURL")
+	if len(notificationURL) == 0 {
+		notificationURL = ctx.FullRequestURI()
+	}
 	signedPayload := notificationURL + string(body)
 	mac := hmac.New(sha256.New, []byte(signatureKey))
 	mac.Write([]byte(signedPayload))

@@ -25,12 +25,12 @@ type GatewayRefundData struct {
 }
 
 var defaultMaxAge = time.Hour * 24
-var cackedKeys = sync.Map{}
+var cachedKeys = sync.Map{}
 var cachedData = ttlmap.New(&ttlmap.Options{
 	InitialCapacity: 100,
 	OnWillExpire:    nil,
 	OnWillEvict: func(key string, item ttlmap.Item) {
-		cackedKeys.Delete(key)
+		cachedKeys.Delete(key)
 	},
 })
 
@@ -60,18 +60,18 @@ func getCachedRefundData(key string) (data GatewayRefundData, err error) {
 }
 
 func setCachedData(key string, val interface{}) error {
-	cackedKeys.Store(key, struct{}{})
+	cachedKeys.Store(key, struct{}{})
 	return cachedData.Set(key, ttlmap.NewItem(val, ttlmap.WithTTL(defaultMaxAge)), nil)
 }
 
 func DeleteCachedKey(key string) {
 	cachedData.Delete(key)
-	cackedKeys.Delete(key)
+	cachedKeys.Delete(key)
 }
 
 func GetAllCachedKeys() []string {
 	var keys []string
-	cackedKeys.Range(func(key, value interface{}) bool {
+	cachedKeys.Range(func(key, value interface{}) bool {
 		keys = append(keys, key.(string))
 		return true
 	})

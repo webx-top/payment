@@ -76,8 +76,8 @@ func (a *Mollie) client() *resty.Request {
 func (a *Mollie) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, error) {
 	body := map[string]interface{}{
 		"amount": map[string]interface{}{
-			"currency": strings.ToLower(cfg.Currency.String()),
-			"value":   MoneyFeeToString(cfg.Amount),
+			"currency": cfg.Currency.String(),
+			"value":    MoneyFeeToString(cfg.Amount),
 		},
 		"description": defaultString(cfg.Subject, "Order"),
 		"redirectUrl": defaultString(cfg.ReturnURL, ""),
@@ -86,7 +86,7 @@ func (a *Mollie) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, er
 			"out_trade_no": cfg.OutTradeNo,
 		},
 		"webhookUrl": defaultString(cfg.NotifyURL, ""),
-		"method":       defaultString(cfg.Subtype, ""), // ideal/bancontact/creditcard等
+		"method":     defaultString(cfg.Subtype, ""), // ideal/bancontact/creditcard等
 	}
 
 	var response struct {
@@ -191,7 +191,7 @@ func (a *Mollie) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, e
 	body := map[string]interface{}{
 		"amount": map[string]interface{}{
 			"currency": strings.ToLower(cfg.Currency.String()),
-			"value":   MoneyFeeToString(cfg.RefundAmount),
+			"value":    MoneyFeeToString(cfg.RefundAmount),
 		},
 		"metadata": map[string]string{
 			"out_refund_no": cfg.OutRefundNo,
@@ -199,12 +199,12 @@ func (a *Mollie) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, e
 	}
 
 	var response struct {
-		Resource   string `json:"resource"`
-		ID         string `json:"id"`
-		Status     string `json:"status"`
-		Amount     map[string]string `json:"amount"`
-		SettledAt  string `json:"settledAt"`
-		CreatedAt  string `json:"createdAt"`
+		Resource  string            `json:"resource"`
+		ID        string            `json:"id"`
+		Status    string            `json:"status"`
+		Amount    map[string]string `json:"amount"`
+		SettledAt string            `json:"settledAt"`
+		CreatedAt string            `json:"createdAt"`
 	}
 
 	resp, err := a.client().
@@ -274,11 +274,11 @@ func (a *Mollie) RefundNotify(ctx echo.Context) error {
 // 文档: https://docs.mollie.com/reference/v2/refunds-api/get-refund
 func (a *Mollie) RefundQuery(ctx echo.Context, cfg *config.Query) (*config.Result, error) {
 	var response struct {
-		ID         string `json:"id"`
-		Status     string `json:"status"`
-		Amount     map[string]string `json:"amount"`
-		PaymentID  string `json:"paymentId"`
-		SettledAt  string `json:"settledAt"`
+		ID        string            `json:"id"`
+		Status    string            `json:"status"`
+		Amount    map[string]string `json:"amount"`
+		PaymentID string            `json:"paymentId"`
+		SettledAt string            `json:"settledAt"`
 	}
 
 	resp, err := a.client().
@@ -338,22 +338,22 @@ func (a *Mollie) getRefund(id string) (*mollieRefund, error) {
 }
 
 type molliePayment struct {
-	ID            string            `json:"id"`
-	Status        string            `json:"status"`
-	IsCancelable  bool              `json:"isCancelable"`
-	Amount        map[string]string `json:"amount"`
+	ID             string            `json:"id"`
+	Status         string            `json:"status"`
+	IsCancelable   bool              `json:"isCancelable"`
+	Amount         map[string]string `json:"amount"`
 	AmountCaptured map[string]string `json:"amountCaptured"`
 	AmountRefunded map[string]string `json:"amountRefunded"`
-	Description   string            `json:"description"`
-	Method        string            `json:"method"`
-	Metadata      map[string]string `json:"metadata"`
-	CreatedAt     string            `json:"createdAt"`
-	PaidAt        string            `json:"paidAt"`
-	ExpiresAt     string            `json:"expiresAt"`
-	ExpiredAt     string            `json:"expiredAt"`
-	CancelledAt   string            `json:"cancelledAt"`
-	Links         struct {
-		PaymentURL struct { Href string } `json:"paymentUrl"`
+	Description    string            `json:"description"`
+	Method         string            `json:"method"`
+	Metadata       map[string]string `json:"metadata"`
+	CreatedAt      string            `json:"createdAt"`
+	PaidAt         string            `json:"paidAt"`
+	ExpiresAt      string            `json:"expiresAt"`
+	ExpiredAt      string            `json:"expiredAt"`
+	CancelledAt    string            `json:"cancelledAt"`
+	Links          struct {
+		PaymentURL struct{ Href string } `json:"paymentUrl"`
 	} `json:"_links"`
 }
 

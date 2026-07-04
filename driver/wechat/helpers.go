@@ -2,7 +2,7 @@ package wechat
 
 import (
 	"encoding/xml"
-	"io/ioutil"
+	"io"
 	"strconv"
 	"strings"
 	"time"
@@ -49,10 +49,11 @@ func XmlToMap(xmlStr string) wxpay.Params {
 func (a *Wechat) VerifySign(ctx echo.Context) error {
 	body := ctx.Request().Body()
 	defer body.Close()
-	b, err := ioutil.ReadAll(body)
+	b, err := io.ReadAll(body)
 	if err != nil {
 		return err
 	}
+	ctx.Request().SetBody(strings.NewReader(string(b)))
 	params := wxpay.XmlToMap(string(b))
 	if !a.Client().ValidSign(params) {
 		return config.ErrSignature

@@ -1,170 +1,157 @@
 package unionpay
-
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
-
 	"github.com/admpub/resty/v2"
 	"github.com/webx-top/echo"
 	"github.com/webx-top/payment"
 	"github.com/webx-top/payment/config"
 	"github.com/webx-top/restyclient"
 )
-
 const Name = `unionpay`
-
 var supports = config.Supports{
 	config.SupportPayNotify,
 	config.SupportPayQuery,
 	config.SupportRefund,
 	config.SupportRefundQuery,
 }
-
 var SupportedCurrencies = []string{
 	"CNY",
 }
-
-// 银联开放平台 API 文档: https://open.unionpay.com/tjweb/api/detail?id=2
-
+// 银联开放平台 API 文档: https://open.unionpay.com/tjweb/api/dictionary?index=1&catId=10&apiSvcId=448
 func init() {
 	payment.Register(Name, echo.T(`UnionPay`), New)
 }
-
 func New() payment.Driver {
 	return &UnionPay{}
 }
-
 type UnionPay struct {
 	account        *config.Account
 	notifyCallback payment.NotifyCallback
-	apiURL         string
-	frontURL       string // 前台交易地址
+	gatewayHost    string
 }
-
 func (a *UnionPay) IsSupported(s config.Support) bool {
 	return supports.IsSupported(s)
 }
-
 func (a *UnionPay) SetNotifyCallback(callback payment.NotifyCallback) payment.Driver {
 	a.notifyCallback = callback
 	return a
 }
-
 func (a *UnionPay) SetAccount(account *config.Account) payment.Driver {
 	a.account = account
-	a.apiURL = account.Options.Extra.String("apiURL")
-	if len(a.apiURL) == 0 {
+	a.gatewayHost = account.Options.Extra.String("gatewayHost")
+	if len(a.gatewayHost) == 0 {
 		if a.account.Debug {
-			a.apiURL = "https://gateway.test.95516.com/gateway/api"
-			a.frontURL = "https://gateway.test.95516.com/frontTransReq"
+			a.gatewayHost = "https://gateway.test.95516.com"
 		} else {
-			a.apiURL = "https://gateway.95516.com/gateway/api"
-			a.frontURL = "https://gateway.95516.com/frontTransReq"
-		}
-	}
-	a.frontURL = account.Options.Extra.String("frontURL")
-	if len(a.frontURL) == 0 {
-		if a.account.Debug {
-			a.frontURL = "https://gateway.test.95516.com/frontTransReq"
-		} else {
-			a.frontURL = "https://gateway.95516.com/frontTransReq"
+			a.gatewayHost = "https://gateway.95516.com"
 		}
 	}
 	return a
 }
-
 func (a *UnionPay) client() *resty.Request {
 	return restyclient.Retryable().
 		SetHeader("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8").
 		SetHeader("Accept", "application/json")
 }
-
-// Pay 创建银联支付订单(网关支付/手机控件支付)
-// 文档: https://open.unionpay.com/tjweb/api/detail?id=2 (消费类交易)
-// 支持模式: 01-网关支付, 02-手机控件支付
+// buildParams 构造银联请求公共参数
+// payURL 返回对应交易类型的网关地址
+func (a *UnionPay) payURL(tradeType string) string {
+	switch tradeType {
+	case "02": // 手机控件支付
+		return a.gatewayHost + "/gateway/api/appTransReq.do"
+	default: // 网关支付
+		return a.gatewayHost + "/gateway/api/frontTransReq.do"
+	}
+}
+// Pay 创建银联支付订单
+// 文档:
+//   网关支付: https://open.unionpay.com/tjweb/acproduct/APIList?apiservId=448&acpAPIId=754&bussType=0
+//   手机控件支付: https://open.unionpay.com/tjweb/acproduct/APIList?apiservId=448&acpAPIId=961&bussType=0
+// 支持模式: Subtype=01 网关支付, Subtype=02 手机控件支付
 func (a *UnionPay) Pay(ctx echo.Context, cfg *config.Pay) (*config.PayResponse, error) {
 	if a.account == nil || a.account.MerchantID == "" || a.account.AppSecret == "" {
 		return nil, fmt.Errorf("unionpay: missing merchant config")
 	}
-
-	bizType := "000201" // 消费
-	tradeType := defaultString(cfg.Subtype, "01") // 默认网关支付
-
+	tradeType := defaultString(cfg.Subtype, "01")
 	body := map[string]string{
-		"version":     "5.1.0",
-		"encoding":    "UTF-8",
-		"certId":      a.account.PublicKey,
-		"signMethod":  "01",     // RSA签名
-		"txnType":     "01",     // 消费交易
-		"txnSubType":  "01",     // 自助消费
-		"bizType":     bizType,
-		"channelType": "07",     // PC网页
-		"backUrl":     defaultString(cfg.NotifyURL, ""),
-		"frontUrl":    defaultString(cfg.ReturnURL, ""),
-		"merId":       a.account.MerchantID,
-		"orderId":     cfg.OutTradeNo,
-		"txnTime":     time.Now().Format("20060102150405"),
-		"txnAmt":      AmountToYi(cfg.Amount),
-		"currencyCode": "156", // CNY
-		"orderDesc":   defaultString(cfg.Subject, ""),
-		"reqReserved": cfg.PassbackParams,
+		"version":      "5.1.0",
+		"encoding":     "UTF-8",
+		"certId":       a.account.PublicKey,
+		"signMethod":   "01",
+		"txnType":      "01",
+		"txnSubType":   "01",
+		"bizType":      "000201",
+		"channelType":  "07",
+		"accessType":   "0",
+		"merId":        a.account.MerchantID,
+		"orderId":      cfg.OutTradeNo,
+		"txnTime":      time.Now().Format("20060102150405"),
+		"txnAmt":       AmountToYi(cfg.Amount),
+		"currencyCode": "156",
+		"backUrl":      defaultString(cfg.NotifyURL, ""),
+		"frontUrl":     defaultString(cfg.ReturnURL, ""),
+		"orderDesc":    defaultString(cfg.Subject, ""),
+		"reqReserved":  cfg.PassbackParams,
 	}
-
 	switch tradeType {
 	case "02":
 		body["channelType"] = "08" // 手机
 	default:
 		body["channelType"] = "07" // PC网页
 	}
-
 	// 签名
 	sign := a.GenerateSign(body)
 	body["signature"] = sign
-
-	resp, err := a.client().
-		SetBody(body).
-		Post(a.frontURL)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("unionpay: pay request failed %d", resp.StatusCode())
-	}
-
 	result := &config.PayResponse{
-		TradeNo:     cfg.OutTradeNo,
-		RedirectURL: resp.Header().Get("Location"),
-		Raw:         body,
+		TradeNo: cfg.OutTradeNo,
+		Raw:     body,
 	}
-
-	// 如果响应体包含 tn(交易流水号)，返回给前端用于手机控件
-	var payResp map[string]string
-	json.Unmarshal(resp.Body(), &payResp)
-	if tn, ok := payResp["tn"]; ok {
-		result.Params = echo.H{"tn": tn, "trade_type": tradeType}
-		result.TradeNo = cfg.OutTradeNo
+	if tradeType == "02" {
+		// 手机控件支付: 服务端 POST 到 appTransReq.do 获取 tn
+		resp, err := a.client().
+			SetFormData(body).
+			Post(a.payURL(tradeType))
+		if err != nil {
+			return nil, err
+		}
+		if resp.StatusCode() != http.StatusOK {
+			return nil, fmt.Errorf("unionpay: app pay request failed %d", resp.StatusCode())
+		}
+		// 解析响应中的 tn（银联返回 URL-encoded 表单数据）
+		respValues, err := parseQuery(resp.String())
+		if err != nil {
+			return nil, fmt.Errorf("unionpay: parse app pay response failed: %v", err)
+		}
+		if tn := respValues.Get("tn"); len(tn) > 0 {
+			result.TradeNo = tn
+			result.Params = echo.H{"tn": tn, "trade_type": tradeType}
+		} else {
+			return nil, fmt.Errorf("unionpay: app pay response missing tn: %s", resp.String())
+		}
+	} else {
+		// 网关支付: 返回 action URL + 参数，由前端渲染 HTML 表单自动提交
+		result.RedirectURL = a.payURL(tradeType)
+		params := make(echo.H, len(body))
+		for k, v := range body {
+			params[k] = v
+		}
+		result.Params = params
 	}
-
 	return result, nil
 }
-
-// PayNotify 处理银联回调通知
-// 文档: https://open.unionpay.com/tjweb/api/detail?id=175 (后台通知接口说明)
+// PayNotify 处理银联支付回调通知
+// 文档: https://open.unionpay.com/tjweb/acproduct/APIList?apiservId=448&acpAPIId=754&bussType=0 (后台通知接口说明)
 func (a *UnionPay) PayNotify(ctx echo.Context) error {
 	payload := parseFormData(ctx)
-
 	if err := a.VerifyPayloadSign(payload); err != nil {
 		return ctx.String("fail")
 	}
-
-	// 判断交易状态
 	respCode := payload["respCode"]
 	orderId := payload["orderId"]
 	txnAmt := payload["txnAmt"]
-
-	if a.notifyCallback != nil && respCode == "00" { // 成功
+	if a.notifyCallback != nil && respCode == "00" {
 		result := &config.Result{
 			Operation:   config.OperationPayment,
 			Status:      config.TradeStatusSuccess,
@@ -191,149 +178,125 @@ func (a *UnionPay) PayNotify(ctx echo.Context) error {
 			a.notifyCallback(ctx, result)
 		}
 	}
-
 	return ctx.String("ok")
 }
-
 // PayQuery 查询交易状态
-// 文档: https://open.unionpay.com/tjweb/api/detail?id=3 (查询交易)
+// 文档: https://open.unionpay.com/tjweb/acproduct/APIList?apiservId=448&acpAPIId=757&bussType=0
 func (a *UnionPay) PayQuery(ctx echo.Context, cfg *config.Query) (*config.Result, error) {
 	body := map[string]string{
-		"version":    "5.1.0",
-		"encoding":   "UTF-8",
-		"certId":     a.account.PublicKey,
-		"signMethod": "01",
-		"txnType":    "00",     // 查询交易
-		"txnSubType": "00",
-		"bizType":    "000000",
-		"merId":      a.account.MerchantID,
-		"orderId":    cfg.TradeNo,
-		"txnTime":    "", // 查询时可不填
+		"version":     "5.1.0",
+		"encoding":    "UTF-8",
+		"certId":      a.account.PublicKey,
+		"signMethod":  "01",
+		"txnType":     "00",
+		"txnSubType":  "00",
+		"bizType":     "000000",
+		"accessType":  "0",
+		"merId":       a.account.MerchantID,
+		"orderId":     cfg.OutTradeNo,
+		"txnTime":     "",
 		"reqReserved": "",
 	}
 	sign := a.GenerateSign(body)
 	body["signature"] = sign
-
-	var response struct {
-		RespCode string `json:"respCode"`
-		RespMsg  string `json:"respMsg"`
-		QueryId  string `json:"queryId"`
-		OrderId  string `json:"orderId"`
-		TxnAmt   string `json:"txnAmt"`
-		TxnTime  string `json:"txnTime"`
-		Status   string `json:"status"` // 原始交易状态码
-	}
-
 	resp, err := a.client().
-		SetResult(&response).
-		SetBody(body).
-		Post(a.apiURL + "/query.trans")
+		SetFormData(body).
+		Post(a.gatewayHost + "/gateway/api/queryTrans.do")
 	if err != nil {
 		return nil, err
 	}
 	if resp.StatusCode() != http.StatusOK {
 		return nil, fmt.Errorf("unionpay: query failed %d", resp.StatusCode())
 	}
-
-	status := MappingRespCode(response.RespCode)
-
+	rValues, err := parseQuery(resp.String())
+	if err != nil {
+		return nil, fmt.Errorf("unionpay: parse query response failed: %v", err)
+	}
+	// origRespCode 表原始交易状态，respCode 仅表查询动作是否成功
+	origRespCode := rValues.Get("origRespCode")
+	if len(origRespCode) == 0 {
+		origRespCode = rValues.Get("respCode")
+	}
+	status := MappingRespCode(origRespCode)
 	return &config.Result{
 		Operation:   config.OperationPayment,
 		Status:      status,
-		TradeNo:     response.QueryId,
-		OutTradeNo:  response.OrderId,
+		TradeNo:     rValues.Get("queryId"),
+		OutTradeNo:  rValues.Get("orderId"),
 		Currency:    "CNY",
-		TotalAmount: YiToAmount(response.TxnAmt),
-		Raw:         &response,
+		TotalAmount: YiToAmount(rValues.Get("txnAmt")),
+		Raw:         rValues,
 	}, nil
 }
-
 // Refund 发起退款
-// 文档: https://open.unionpay.com/tjweb/api/detail?id=4 (退款交易)
+// 文档: https://open.unionpay.com/tjweb/acproduct/APIList?apiservId=448&acpAPIId=756&bussType=0
 func (a *UnionPay) Refund(ctx echo.Context, cfg *config.Refund) (*config.Result, error) {
 	body := map[string]string{
-		"version":     "5.1.0",
-		"encoding":    "UTF-8",
-		"certId":      a.account.PublicKey,
-		"signMethod":  "01",
-		"txnType":     "04",     // 退款
-		"txnSubType":  "00",     // 原交易退款
-		"bizType":     "000402", // 退款业务
-		"channelType": "07",
-		"backUrl":     defaultString(cfg.NotifyURL, ""),
-		"merId":       a.account.MerchantID,
-		"orderId":     cfg.OutRefundNo, // 退款订单号
-		"origQryId":   cfg.TradeNo,     // 原交易查询号
-		"txnTime":     time.Now().Format("20060102150405"),
-		"txnAmt":      AmountToYi(cfg.RefundAmount), // 退款金额(分)
+		"version":      "5.1.0",
+		"encoding":     "UTF-8",
+		"certId":       a.account.PublicKey,
+		"signMethod":   "01",
+		"txnType":      "04",
+		"txnSubType":   "00",
+		"bizType":      "000201",
+		"channelType":  "07",
+		"accessType":   "0",
+		"merId":        a.account.MerchantID,
+		"orderId":      cfg.OutRefundNo,
+		"origQryId":    cfg.TradeNo,
+		"txnTime":      time.Now().Format("20060102150405"),
+		"txnAmt":       AmountToYi(cfg.RefundAmount),
 		"currencyCode": "156",
+		"backUrl":      defaultString(cfg.NotifyURL, ""),
 	}
-
 	sign := a.GenerateSign(body)
 	body["signature"] = sign
-
-	var response struct {
-		RespCode  string `json:"respCode"`
-		RespMsg   string `json:"respMsg"`
-		QueryId   string `json:"queryId"`
-		OrderId   string `json:"orderId"`
-		OrigQryId string `json:"origQryId"`
-		TxnAmt    string `json:"txnAmt"`
-	}
-
 	resp, err := a.client().
-		SetResult(&response).
-		SetBody(body).
-		Post(a.apiURL + "/refund.trans")
+		SetFormData(body).
+		Post(a.gatewayHost + "/gateway/api/backTransReq.do")
 	if err != nil {
 		return nil, err
 	}
 	if resp.StatusCode() != http.StatusOK {
 		return nil, fmt.Errorf("unionpay: refund failed %d", resp.StatusCode())
 	}
-
-	status := MapRefundRespCode(response.RespCode)
-
+	rValues, err := parseQuery(resp.String())
+	if err != nil {
+		return nil, fmt.Errorf("unionpay: parse refund response failed: %v", err)
+	}
+	status := MapRefundRespCode(rValues.Get("respCode"))
 	return &config.Result{
 		Operation:   config.OperationRefund,
 		Status:      status,
-		TradeNo:     response.OrigQryId,
+		TradeNo:     rValues.Get("origQryId"),
 		OutTradeNo:  cfg.OutTradeNo,
 		Currency:    "CNY",
-		RefundFee:   YiToAmount(response.TxnAmt),
-		RefundNo:    response.QueryId,
-		OutRefundNo: cfg.OutRefundNo,
-		Raw:         &response,
+		RefundFee:   YiToAmount(rValues.Get("txnAmt")),
+		RefundNo:    rValues.Get("queryId"),
+		OutRefundNo: rValues.Get("orderId"),
+		Raw:         rValues,
 	}, nil
 }
-
 // RefundNotify 处理银联退款回调通知
-// 文档: https://open.unionpay.com/tjweb/api/detail?id=175 (后台通知接口说明)
-// 退款通知与支付通知共用同一接口，通过 txnType 区分: 04=退款
+// 文档: https://open.unionpay.com/tjweb/acproduct/APIList?apiservId=448&acpAPIId=756&bussType=0 (后台通知接口说明)
 func (a *UnionPay) RefundNotify(ctx echo.Context) error {
 	payload := parseFormData(ctx)
-
 	if err := a.VerifyPayloadSign(payload); err != nil {
 		return ctx.String("fail")
 	}
-
 	txnType := payload["txnType"]
 	respCode := payload["respCode"]
-
 	if txnType != "04" {
 		return ctx.String("ok")
 	}
-
 	if a.notifyCallback == nil {
 		return ctx.String("ok")
 	}
-
 	orderId := payload["orderId"]
 	queryId := payload["queryId"]
 	txnAmt := payload["txnAmt"]
 	origQryId := payload["origQryId"]
-
-	if respCode == "00" { // 退款成功
+	if respCode == "00" {
 		result := &config.Result{
 			Operation:   config.OperationRefund,
 			Status:      config.TradeStatusSuccess,
@@ -361,59 +324,55 @@ func (a *UnionPay) RefundNotify(ctx echo.Context) error {
 		}
 		a.notifyCallback(ctx, result)
 	}
-
 	return ctx.String("ok")
 }
-
 // RefundQuery 查询退款结果
-// 文档: https://open.unionpay.com/tjweb/api/detail?id=5 (查询退款)
+// 文档: https://open.unionpay.com/tjweb/acproduct/APIList?apiservId=448&acpAPIId=757&bussType=0 (查询交易)
 func (a *UnionPay) RefundQuery(ctx echo.Context, cfg *config.Query) (*config.Result, error) {
 	body := map[string]string{
-		"version":    "5.1.0",
-		"encoding":   "UTF-8",
-		"certId":     a.account.PublicKey,
-		"signMethod": "01",
-		"txnType":    "00",
-		"txnSubType": "00",
-		"bizType":    "000000",
-		"merId":      a.account.MerchantID,
-		"orderId":    cfg.OutRefundNo, // 用退款单号查询
+		"version":     "5.1.0",
+		"encoding":    "UTF-8",
+		"certId":      a.account.PublicKey,
+		"signMethod":  "01",
+		"txnType":     "00",
+		"txnSubType":  "00",
+		"bizType":     "000000",
+		"accessType":  "0",
+		"merId":       a.account.MerchantID,
+		"orderId":     cfg.OutRefundNo,
+		"txnTime":     "",
 		"reqReserved": "",
 	}
 	sign := a.GenerateSign(body)
 	body["signature"] = sign
-
-	var response struct {
-		RespCode  string `json:"respCode"`
-		RespMsg   string `json:"respMsg"`
-		QueryId   string `json:"queryId"`
-		OrderId   string `json:"orderId"`
-		TxnAmt    string `json:"txnAmt"`
-		OrigQryId string `json:"origQryId"`
-	}
-
 	resp, err := a.client().
-		SetResult(&response).
-		SetBody(body).
-		Post(a.apiURL + "/query.trans")
+		SetFormData(body).
+		Post(a.gatewayHost + "/gateway/api/queryTrans.do")
 	if err != nil {
 		return nil, err
 	}
 	if resp.StatusCode() != http.StatusOK {
 		return nil, fmt.Errorf("unionpay: refund query failed %d", resp.StatusCode())
 	}
-
-	status := MapRefundRespCode(response.RespCode)
-
+	rValues, err := parseQuery(resp.String())
+	if err != nil {
+		return nil, fmt.Errorf("unionpay: parse refund query response failed: %v", err)
+	}
+	// 退款查询也用 origRespCode 判断实际退款状态
+	origRespCode := rValues.Get("origRespCode")
+	if len(origRespCode) == 0 {
+		origRespCode = rValues.Get("respCode")
+	}
+	status := MapRefundRespCode(origRespCode)
 	return &config.Result{
 		Operation:   config.OperationRefund,
 		Status:      status,
-		TradeNo:     response.OrigQryId,
+		TradeNo:     rValues.Get("origQryId"),
 		OutTradeNo:  cfg.OutTradeNo,
 		Currency:    "CNY",
-		RefundFee:   YiToAmount(response.TxnAmt),
-		RefundNo:    response.QueryId,
+		RefundFee:   YiToAmount(rValues.Get("txnAmt")),
+		RefundNo:    rValues.Get("queryId"),
 		OutRefundNo: cfg.OutRefundNo,
-		Raw:         &response,
+		Raw:         rValues,
 	}, nil
 }
