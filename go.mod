@@ -10,11 +10,10 @@ require (
 	github.com/admpub/log v1.5.2
 	github.com/admpub/mugglepay v0.0.8
 	github.com/admpub/resty/v2 v2.7.3
-	github.com/objcoding/wxpay v1.0.6
+	github.com/go-pay/gopay v1.5.123
 	github.com/qingwg/payjs v0.0.0-20190928033402-c53dbe16b371
 	github.com/smartwalle/paypal v1.0.2
 	github.com/stripe/stripe-go/v81 v81.4.0
-	github.com/webx-top/codec v0.3.0
 	github.com/webx-top/com v1.5.3
 	github.com/webx-top/echo v1.25.0
 	github.com/webx-top/restyclient v0.0.6
@@ -35,6 +34,12 @@ require (
 	github.com/admpub/xencoding v0.0.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/francoispqt/gojay v1.2.13 // indirect
+	github.com/go-pay/crypto v0.0.3 // indirect
+	github.com/go-pay/errgroup v0.0.3 // indirect
+	github.com/go-pay/smap v0.0.2 // indirect
+	github.com/go-pay/util v0.0.4 // indirect
+	github.com/go-pay/xlog v0.0.3 // indirect
+	github.com/go-pay/xtime v0.0.2 // indirect
 	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/gosimple/slug v1.15.0 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
@@ -54,6 +59,7 @@ require (
 	github.com/smartwalle/nsign v1.0.9 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/webx-top/captcha v0.1.0 // indirect
+	github.com/webx-top/codec v0.3.0 // indirect
 	github.com/webx-top/poolx v0.0.0-20210912044716-5cfa2d58e380 // indirect
 	github.com/webx-top/tagfast v0.0.1 // indirect
 	github.com/webx-top/validation v0.0.3 // indirect
